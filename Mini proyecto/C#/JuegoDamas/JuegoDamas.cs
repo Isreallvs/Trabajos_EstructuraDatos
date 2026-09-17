@@ -227,6 +227,17 @@ void RealizarMovimiento(int[,] tablero, int filaOrigen, int colOrigen, int filaD
     tablero[filaDestino, colDestino] = tablero[filaOrigen, colOrigen]; //Copia el numero de origen y lo pega en la casilla de destino
     tablero[filaOrigen, colOrigen] = 0; //Le da el valor de 0 a la casilla vieja para no clonar el numero que se copio
 
+    //revisar coronación
+    if (tablero[filaDestino, colDestino] == 1 && filaDestino == 7) //si la ficha que se movio es 1(clara) y llega a la ultima fila (7) se corona
+    {
+        tablero[filaDestino, colDestino] = 3; //3 es dama clara
+        Console.WriteLine("La ficha se coronó a Dama.");
+    }
+    else if (tablero[filaDestino, colDestino] == 2 && filaDestino == 0) //si la ficha que se movio es 2(oscura) y llega a la ultima fila (0) se corona
+    {
+        tablero[filaDestino, colDestino] = 4; //4 es dama oscura
+        Console.WriteLine("La ficha se coronó a Dama.");
+    }
 }
 
 //Captura obligatoria disponible
