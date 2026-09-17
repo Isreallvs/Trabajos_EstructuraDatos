@@ -21,21 +21,41 @@ for (int fila = 0; fila < 8; fila++)  // ciclo externo
     }
 }
 
-//Ejecucion de prueba del juego
+int turnoActual = 1; //Empieza en 1 porque las fichas claras empiezan el juego
 
-DibujarTablero(tablero); //Imprime el tablero original
+bool juegoActivo = true; //Se usa como interruptor, para saber si el juego debe seguir corriendo
 
-Console.WriteLine("Qué ficha quieres mover?");
-Console.Write("Fila: ");
+while (juegoActivo) //While ya que no sabemos cuantos turnos va a durar una partida
+{
+    DibujarTablero(tablero); //mostramos el tablero actual en cada turno
 
-int filaElegida = int.Parse(Console.ReadLine()!); //Readline nos lee el texto pero int.parse lo convierte a numero
+    String colorTurno = (turnoActual == 1) ? "Claras" : "Oscuras";
+    Console.WriteLine($"Turno del jugador: {colorTurno}");
 
-Console.Write("Columna: ");
-int colElegida = int.Parse(Console.ReadLine()!);
 
-RevisarMovimientos(tablero, filaElegida, colElegida); // Probamos el radar con una ficha especifica
+    Console.WriteLine("Qué ficha quieres mover?");
+    Console.Write("Fila origen: ");
 
-DibujarTablero(tablero); //Dibujamos el tablero de nuevo para ver el resultado del movimiento
+    int filaOrigen= int.Parse(Console.ReadLine()!); //Readline nos lee el texto pero int.parse lo convierte a numero
+
+    Console.Write("Columna origen: ");
+    int columnaOrigen = int.Parse(Console.ReadLine()!);
+
+    Console.WriteLine("A donde la quieres mover?");
+    Console.Write("Fila destino: ");
+    int filaDestino = int.Parse(Console.ReadLine()!);
+    Console.Write("Columna destino: ");
+    int columnaDestino = int.Parse(Console.ReadLine()!);
+
+    bool movimientoExitoso = IntentarMover(tablero, filaOrigen, columnaOrigen, filaDestino, columnaDestino, turnoActual); // Probamos el radar con una ficha especifica
+
+    if (movimientoExitoso)
+    {
+        turnoActual = (turnoActual == 1) ? 2 : 1; // Nos dice si el turno actual era 1, ahora pasa a ser 2, sino pasa a ser 1
+    }
+    
+}
+
 
 
 //Funciones Visuales ("interfaz")
@@ -49,12 +69,22 @@ void DibujarTablero(int[,] tablero)
 
         for (int columna = 0; columna < 8; columna ++)
         {
+            int valor = tablero[fila, columna];
+
+            if (valor == 1 || valor == 3)
+            {
+                Console.ForegroundColor = ConsoleColor.White; //fichas claras de color blanco
+            }
+            else if (valor == 2 || valor == 4)
+            {
+                Console.ForegroundColor = ConsoleColor.Red; //fichas oscuras color rojo
+            }
             char simbolo = '.'; // Casilla vacia
 
-            if (tablero[fila, columna] == 1) simbolo = 'b';
-            else if (tablero[fila, columna] == 2) simbolo = 'r';
-            else if (tablero[fila, columna] == 3) simbolo = 'B';
-            else if (tablero[fila, columna] == 4) simbolo = 'R';
+            if (valor == 1) simbolo = '●';
+            else if (valor == 2) simbolo = '●';
+            else if (valor == 3) simbolo = '♛';
+            else if (valor == 4) simbolo = '♛';
 
             Console.Write(simbolo + " ");  //espacio para separar columnas 
         }
@@ -64,57 +94,82 @@ void DibujarTablero(int[,] tablero)
 
 
 //Logica del juego (Movimientos y reglas)
-void RevisarMovimientos(int[,] tablero, int fila, int columna)
+bool IntentarMover(int[,] tablero, int filaOrigen, int columnaOrigen, int filaDestino, int columnaDestino, int turnoActual)
 {
-    if (tablero[fila, columna] == 1 || tablero[fila, columna] == 2)
+    if (tablero[filaOrigen, columnaOrigen] == 0) //Validamos que exista una ficha en el origen
     {
-        int direccion = (tablero[fila, columna] == 1) ? 1 : -1;
-        int rival = (tablero[fila, columna] == 1) ? 2 : 1; // Identificamos la ficha contraria
+        Console.WriteLine("No hay ninguna ficha en esa casilla.");
+        return false;
+    }
 
-        int nuevaFila = fila + direccion;
-        int[] columnasPosibles = { columna - 1, columna + 1 };
+    // Si es turno de las claras (1), no puede mover una ficha oscura (2), y viceversa.
+    if (tablero[filaOrigen, columnaOrigen] != turnoActual)
+    {
+        Console.WriteLine("Esa ficha no es tuya, no puedes moverla en este turno.");
+        return false;
+    }
 
-        foreach (int nuevaColumna in columnasPosibles)
+    if (filaDestino < 0 || filaDestino > 7 || columnaDestino < 0 || columnaDestino > 7)// validar que el destino este dentro del tablero
+    {
+        Console.WriteLine("Ese destino está fuera del tablero.");
+        return false;
+    }
+
+    if (tablero[filaDestino, columnaDestino] != 0) //Validar que no haya fichas en el destino
+    {
+        Console.WriteLine("Esa casilla ya está ocupada.");
+        return false;
+    }
+
+    //Calcular direccion segun el color
+    int direccion = (turnoActual == 1) ? 1 : -1; // claras avanzan +1, oscuras -1
+
+    int distanciaFila = filaDestino - filaOrigen;
+    int distanciaColumna = columnaDestino - columnaOrigen;
+
+    // Valida si el movimiento es simple (1 casilla en diagonal)
+    bool esMovimientoSimple = (distanciaFila == direccion) && (distanciaColumna == 1 || distanciaColumna == -1);
+
+    //Valida si el movimiento es una captura (2 casillas en diagonal, saltando rival)
+    bool esCaptura = (distanciaFila == direccion * 2) && (distanciaColumna == 2 || distanciaColumna == -2);
+
+    if (esCaptura)
+    {
+        // La ficha rival debe estar justo a la mitad del salto
+        int filaComida = (filaOrigen + filaDestino) / 2;
+        int columnaComida = (columnaOrigen + columnaDestino) / 2;
+
+        int rival = (turnoActual == 1) ? 2 : 1;
+
+        if (tablero[filaComida, columnaComida] != rival)
         {
-            // primero revisamos si podemos comer (saltar 2 casillas)
-            int filaSalto = fila + (direccion * 2);
-            int columnaSalto = (nuevaColumna < columna) ? columna - 2 : columna + 2;
-
-            // validar que el salto caiga dentro del tablero (0 a 7)
-            if (filaSalto >= 0 && filaSalto <= 7 && columnaSalto >= 0 && columnaSalto <= 7)
-            {
-                // si la casilla al lado tiene un rival Y la casilla tras él está vacía (0)
-                if (tablero[nuevaFila, nuevaColumna] == rival && tablero[filaSalto, columnaSalto] == 0)
-                {
-                    RealizarMovimiento(tablero, fila, columna, filaSalto, columnaSalto);
-                    return; // Salimos para completar solo esta acción
-                }
-            }
-
-            // si no hay quien comer hacemos movimiento simple (1 casilla)
-            if (nuevaFila >= 0 && nuevaFila <= 7 && nuevaColumna >= 0 && nuevaColumna <= 7)
-            {
-                if (tablero[nuevaFila, nuevaColumna] == 0)
-                {
-                    RealizarMovimiento(tablero, fila, columna, nuevaFila, nuevaColumna);
-                    return;
-                }
-            }
+            Console.WriteLine("No hay ficha rival para comer en ese salto.");
+            return false;
         }
+
+        // Todo válido: ejecutamos el movimiento y quitamos la ficha comida
+        RealizarMovimiento(tablero, filaOrigen, columnaOrigen, filaDestino, columnaDestino);
+        tablero[filaComida, columnaComida] = 0;
+        Console.WriteLine($"¡Comiste una ficha en ({filaComida}, {columnaComida})!");
+        return true;
+    }
+    else if (esMovimientoSimple)
+    {
+        RealizarMovimiento(tablero, filaOrigen, columnaOrigen, filaDestino, columnaDestino);
+        Console.WriteLine("Movimiento realizado.");
+        return true;
+    }
+    else
+    {
+        Console.WriteLine("Ese movimiento no es válido (no es diagonal correcta).");
+        return false;
     }
 }
+
 //Motor de movimiento
 void RealizarMovimiento(int[,] tablero, int filaOrigen, int colOrigen, int filaDestino, int colDestino)
 {
     tablero[filaDestino, colDestino] = tablero[filaOrigen, colOrigen]; //Copia el numero de origen y lo pega en la casilla de destino
     tablero[filaOrigen, colOrigen] = 0; //Le da el valor de 0 a la casilla vieja para no clonar el numero que se copio
 
-    if (Math.Abs(filaDestino - filaOrigen) == 2)// Si el movimiento fue de 2 filas de distancia siginifica que salto y comio
-    {
-        int filaComida = (filaOrigen + filaDestino) / 2; //Calcula la casilla intermedia
-        int colComida = (colOrigen + colDestino) / 2;
-        tablero[filaComida, colComida] = 0; //borra la ficha del rival
-        Console.WriteLine($"Ficha rival comida en ({filaComida}, {colComida})");
-    }
-    Console.WriteLine($"Movimiento realizado exitosamente");
 }
