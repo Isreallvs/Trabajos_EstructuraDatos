@@ -90,8 +90,8 @@ void RevisarMovimientos (int[,] tablero, int fila, int columna)
 //Motor de movimiento
 void RealizarMovimiento(int[,] tablero, int filaOrigen, int colOrigen, int filaDestino, int colDestino)
 {
-    tablero[filaDestino, colDestino] = tablero[filaOrigen, colOrigen];
-    tablero[filaOrigen, colOrigen] = 0;
+    tablero[filaDestino, colDestino] = tablero[filaOrigen, colOrigen]; //Copia el numero de origen y lo pega en la casilla de destino
+    tablero[filaOrigen, colOrigen] = 0; //Le da el valor de 0 a la casilla vieja para no clonar el numero que se copio
 
     Console.WriteLine($"Movimiento realizado exitosamente");
 }
