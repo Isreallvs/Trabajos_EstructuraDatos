@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("JuegoDamas")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8c38e40f84fdd539773bbcec86595a765ac97144")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b4b941b434adeb18afee8fa8c269cac22edac5a1")]
 [assembly: System.Reflection.AssemblyProductAttribute("JuegoDamas")]
 [assembly: System.Reflection.AssemblyTitleAttribute("JuegoDamas")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

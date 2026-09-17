@@ -27,6 +27,8 @@ int turnoActual = 1; //Empieza en 1 porque las fichas claras empiezan el juego
 
 bool juegoActivo = true; //Se usa como interruptor, para saber si el juego debe seguir corriendo
 
+bool debeSeguirComiendo = false; //para saber si el mismo jugador debe seguir jugando
+
 while (juegoActivo) //While ya que no sabemos cuantos turnos va a durar una partida
 {
     DibujarTablero(tablero); //mostramos el tablero actual en cada turno
@@ -53,7 +55,11 @@ while (juegoActivo) //While ya que no sabemos cuantos turnos va a durar una part
 
     if (movimientoExitoso)
     {
-        turnoActual = (turnoActual == 1) ? 2 : 1; // Nos dice si el turno actual era 1, ahora pasa a ser 2, sino pasa a ser 1
+        if (!debeSeguirComiendo)
+        {
+            turnoActual = (turnoActual == 1) ? 2 : 1; // Nos dice si el turno actual era 1, ahora pasa a ser 2, sino pasa a ser 1
+        }
+        
     }
     
 }
@@ -183,12 +189,28 @@ bool IntentarMover(int[,] tablero, int filaOrigen, int columnaOrigen, int filaDe
         RealizarMovimiento(tablero, filaOrigen, columnaOrigen, filaDestino, columnaDestino);
         tablero[filaComida, columnaComida] = 0;
         Console.WriteLine($"Comiste una ficha en ({filaComida}, {columnaComida})");
+        
+        //preguntamos si desde la nueva posicion puede seguir comiendo
+        if (FichaPuedeComer (tablero, filaDestino, columnaDestino, turnoActual))
+        {
+            Console.WriteLine("Puedes seguir comiendo con la misma ficha. Vuelve a mover.");
+            debeSeguirComiendo = true; //Avisamos que el jugador deber repetir turno
+
+        }
+        else
+        {
+            debeSeguirComiendo = false; //el turno pasa al otro jugador normalmente
+
+        }
         return true;
     }
     else if (esMovimientoSimple)
     {
         RealizarMovimiento(tablero, filaOrigen, columnaOrigen, filaDestino, columnaDestino);
         Console.WriteLine("Movimiento realizado.");
+
+        debeSeguirComiendo = false;
+
         return true;
     }
     else
@@ -196,6 +218,7 @@ bool IntentarMover(int[,] tablero, int filaOrigen, int columnaOrigen, int filaDe
         Console.WriteLine("Ese movimiento no es válido no es diagonal correcta.");
         return false;
     }
+
 }
 
 //Motor de movimiento
@@ -221,32 +244,42 @@ bool capturaDisponible(int [,] tablero, int turnoActual)
                 continue;
             }
 
-            //En caso de que si haya una ficha del jugador revisamos si puede comer en alguna direccion
-
-            int direccion = (turnoActual == 1) ? 1 : -1;
-            int rival = (turnoActual == 1) ? 2 : 1;
-
-            int filaSalto = fila + (direccion * 2); // 2 filas de distancia, asi salta al comer
-            int[] columnasSalto = {columna -2, columna + 2};// las 2 posibles columnas donde puede caer
-
-            foreach (int columnaSalto in columnasSalto)
+            if (FichaPuedeComer( tablero, fila, columna, turnoActual))
             {
-                //validamos la existencia de la casilla donde va a caer
-                if (filaSalto >= 0 && filaSalto <= 7 && columnaSalto >= 0 && columnaSalto <= 7)
-                {
-                    //punto medio es la casilla intermedia donde deberia estar el rival
-                    int filaIntermedia = (fila + filaSalto) / 2;
-                    int columnaIntermedia = (columna + columnaSalto) / 2;
-
-                    //Si en la intermedia hay un rival, y donde va a caer esta vacia, si se puede comer
-                    if (tablero[filaIntermedia, columnaIntermedia] == rival && tablero[filaSalto, columnaSalto] == 0)
-                    {
-                        return true; // Se encuentra al menos una captura disponible, no es necesario seguir buscando
-
-                    }
-                }
-            }
+                return true;
+            }            
         }
     }
     return false; //Si ya recorrimos todas las casillas y no se regresa un true es porque no hay capturas disponibles
+}
+
+//Funcion para ver si una ficha especifica puede comer
+
+bool FichaPuedeComer(int[,] tablero, int fila, int columna, int turnoActual)
+{
+    int direccion = (turnoActual == 1) ? 1 : -1;
+    int rival = (turnoActual == 1) ? 2 : 1;
+
+    int filaSalto = fila + (direccion * 2); // 2 filas de distancia, asi salta al comer
+    int[] columnasSalto = {columna -2, columna + 2};// las 2 posibles columnas donde puede caer
+
+    foreach (int columnaSalto in columnasSalto)
+    {
+        //validamos la existencia de la casilla donde va a caer
+        if (filaSalto >= 0 && filaSalto <= 7 && columnaSalto >= 0 && columnaSalto <= 7)
+        {
+            //punto medio es la casilla intermedia donde deberia estar el rival
+            int filaIntermedia = (fila + filaSalto) / 2;
+            int columnaIntermedia = (columna + columnaSalto) / 2;
+
+            //Si en la intermedia hay un rival, y donde va a caer esta vacia, si se puede comer
+            if (tablero[filaIntermedia, columnaIntermedia] == rival && tablero[filaSalto, columnaSalto] == 0)
+            {
+                return true; // Se encuentra al menos una captura disponible, no es necesario seguir buscando
+
+            }
+        }
+    }
+
+    return false;
 }
