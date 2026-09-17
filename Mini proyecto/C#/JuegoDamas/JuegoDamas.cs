@@ -22,9 +22,18 @@ for (int fila = 0; fila < 8; fila++)  // ciclo externo
 }
 
 //Ejecucion de prueba del juego
+
 DibujarTablero(tablero); //Imprime el tablero original
 
-RevisarMovimientos(tablero, 2, 1); // Probamos el radar con una ficha especifica
+Console.WriteLine("Qué ficha quieres mover?");
+Console.Write("Fila: ");
+
+int filaElegida = int.Parse(Console.ReadLine()!); //Readline nos lee el texto pero int.parse lo convierte a numero
+
+Console.Write("Columna: ");
+int colElegida = int.Parse(Console.ReadLine()!);
+
+RevisarMovimientos(tablero, filaElegida, colElegida); // Probamos el radar con una ficha especifica
 
 DibujarTablero(tablero); //Dibujamos el tablero de nuevo para ver el resultado del movimiento
 
@@ -51,9 +60,6 @@ void DibujarTablero(int[,] tablero)
 
 
 //Logica del juego (Movimientos y reglas)
-
-RevisarMovimientos(tablero, 2, 1);
-
 void RevisarMovimientos (int[,] tablero, int fila, int columna)
 {
     if (tablero[fila, columna] == 1 || tablero[fila, columna] == 2)
