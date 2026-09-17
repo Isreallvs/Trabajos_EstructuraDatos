@@ -1,4 +1,5 @@
 ﻿using System.Data;
+Console.OutputEncoding = System.Text.Encoding.UTF8;
 
 //Configuracion inicial del tablero
 
@@ -61,35 +62,54 @@ while (juegoActivo) //While ya que no sabemos cuantos turnos va a durar una part
 //Funciones Visuales ("interfaz")
 void DibujarTablero(int[,] tablero)
 {
-    Console.WriteLine("    0 1 2 3 4 5 6 7"); //Encabezado con numero de las columnas
+    Console.ForegroundColor = ConsoleColor.Gray; // color neutro para encabezados
+    Console.WriteLine("    0 1 2 3 4 5 6 7");
     Console.WriteLine("  +-----------------");
-    for (int fila = 0; fila < 8; fila ++)
-    {
-        Console.Write(fila + " | "); //numero de fila al inicio del renglon
 
-        for (int columna = 0; columna < 8; columna ++)
+    for (int fila = 0; fila < 8; fila++)
+    {
+        Console.ForegroundColor = ConsoleColor.Gray; // número de fila en gris
+        Console.Write(fila + " | ");
+
+        for (int columna = 0; columna < 8; columna++)
         {
             int valor = tablero[fila, columna];
 
-            if (valor == 1 || valor == 3)
-            {
-                Console.ForegroundColor = ConsoleColor.White; //fichas claras de color blanco
-            }
-            else if (valor == 2 || valor == 4)
-            {
-                Console.ForegroundColor = ConsoleColor.Red; //fichas oscuras color rojo
-            }
-            char simbolo = '.'; // Casilla vacia
+            char simbolo = '.';
 
-            if (valor == 1) simbolo = '●';
-            else if (valor == 2) simbolo = '●';
-            else if (valor == 3) simbolo = '♛';
-            else if (valor == 4) simbolo = '♛';
+            if (valor == 1)
+            {
+                Console.ForegroundColor = ConsoleColor.White;
+                simbolo = '●';
+            }
+            else if (valor == 2)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                simbolo = '●';
+            }
+            else if (valor == 3)
+            {
+                Console.ForegroundColor = ConsoleColor.White;
+                simbolo = '♛';
+            }
+            else if (valor == 4)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                simbolo = '♛';
+            }
+            else
+            {
+                Console.ForegroundColor = ConsoleColor.Gray; 
+            }
 
-            Console.Write(simbolo + " ");  //espacio para separar columnas 
+            Console.Write(simbolo + " ");
         }
-        Console.WriteLine(); // salto de linea al terminar cada fila
+
+        Console.ForegroundColor = ConsoleColor.Gray;
+        Console.WriteLine();
     }
+
+    Console.ForegroundColor = ConsoleColor.Gray;
 }
 
 
