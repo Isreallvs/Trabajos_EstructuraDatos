@@ -1,5 +1,7 @@
 ﻿using System.Data;
 
+//Configuracion inicial del tablero
+
 int[,] tablero = new int [8, 8];
 for (int fila = 0; fila < 8; fila++)  // ciclo externo
 {
@@ -19,8 +21,15 @@ for (int fila = 0; fila < 8; fila++)  // ciclo externo
     }
 }
 
-DibujarTablero(tablero);
+//Ejecucion de prueba del juego
+DibujarTablero(tablero); //Imprime el tablero original
 
+RevisarMovimientos(tablero, 2, 1); // Probamos el radar con una ficha especifica
+
+DibujarTablero(tablero); //Dibujamos el tablero de nuevo para ver el resultado del movimiento
+
+
+//Funciones Visuales ("interfaz")
 void DibujarTablero(int[,] tablero)
 {
     for (int fila = 0; fila < 8; fila ++)
@@ -40,23 +49,16 @@ void DibujarTablero(int[,] tablero)
     }
 }
 
+
+//Logica del juego (Movimientos y reglas)
+
 RevisarMovimientos(tablero, 2, 1);
 
 void RevisarMovimientos (int[,] tablero, int fila, int columna)
 {
     if (tablero[fila, columna] == 1 || tablero[fila, columna] == 2)
     {
-        int direccion;
-
-        if (tablero[fila, columna] == 1)
-        {
-            direccion = 1;
-        }
-        else
-        {
-            direccion = -1;
-        }
-
+        int direccion = (tablero[fila, columna] == 1) ? 1 : -1;
         int nuevaFila = fila + direccion;
         int[] columnasPosibles = { columna - 1, columna + 1};
 
@@ -67,13 +69,29 @@ void RevisarMovimientos (int[,] tablero, int fila, int columna)
                 if (tablero[nuevaFila, nuevaColumna] == 0)
                 {
                     Console.WriteLine($"Movimiento válido a: ({nuevaFila}, {nuevaColumna})");
+
+                    //Como el radar vio que esta vacio (0), mueve la ficha
+                    RealizarMovimiento(tablero, fila, columna, nuevaFila, nuevaColumna);
+
+                    //ponemos un break para que solo haga un movimiento
+                    break;
                 }
                 else
                 {
-                    Console.WriteLine($"Casilla ({nuevaFila}, {nuevaColumna}) ocupada, no se puede mover ahí");
+                    Console.WriteLine($"Casilla ({nuevaFila}, {nuevaColumna}) ocupada.");
 
                 }
+
             }
         }
     }
+}
+
+//Motor de movimiento
+void RealizarMovimiento(int[,] tablero, int filaOrigen, int colOrigen, int filaDestino, int colDestino)
+{
+    tablero[filaDestino, colDestino] = tablero[filaOrigen, colOrigen];
+    tablero[filaOrigen, colOrigen] = 0;
+
+    Console.WriteLine($"Movimiento realizado exitosamente");
 }
