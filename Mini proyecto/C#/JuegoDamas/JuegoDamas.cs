@@ -22,6 +22,7 @@ for (int fila = 0; fila < 8; fila++)  // ciclo externo
     }
 }
 
+// Turnos y movimientos
 int turnoActual = 1; //Empieza en 1 porque las fichas claras empiezan el juego
 
 bool juegoActivo = true; //Se usa como interruptor, para saber si el juego debe seguir corriendo
@@ -153,6 +154,17 @@ bool IntentarMover(int[,] tablero, int filaOrigen, int columnaOrigen, int filaDe
     //Valida si el movimiento es una captura (2 casillas en diagonal, saltando rival)
     bool esCaptura = (distanciaFila == direccion * 2) && (distanciaColumna == 2 || distanciaColumna == -2);
 
+    // checamos si hay una captura obligatoria en todo el tablero
+    bool capturaObligatoria = capturaDisponible(tablero, turnoActual);
+
+
+    if (capturaObligatoria && esMovimientoSimple)
+    {
+        //Si hay captura obligatoria y el jugador intenta movimiento simple, lo rehazamos
+        Console.WriteLine("Puedes comer una ficha del rival, estas obligado a comer.");
+        return false;
+    }
+
     if (esCaptura)
     {
         // La ficha rival debe estar justo a la mitad del salto
@@ -170,7 +182,7 @@ bool IntentarMover(int[,] tablero, int filaOrigen, int columnaOrigen, int filaDe
         // Todo válido: ejecutamos el movimiento y quitamos la ficha comida
         RealizarMovimiento(tablero, filaOrigen, columnaOrigen, filaDestino, columnaDestino);
         tablero[filaComida, columnaComida] = 0;
-        Console.WriteLine($"¡Comiste una ficha en ({filaComida}, {columnaComida})!");
+        Console.WriteLine($"Comiste una ficha en ({filaComida}, {columnaComida})");
         return true;
     }
     else if (esMovimientoSimple)
@@ -181,7 +193,7 @@ bool IntentarMover(int[,] tablero, int filaOrigen, int columnaOrigen, int filaDe
     }
     else
     {
-        Console.WriteLine("Ese movimiento no es válido (no es diagonal correcta).");
+        Console.WriteLine("Ese movimiento no es válido no es diagonal correcta.");
         return false;
     }
 }
@@ -192,4 +204,49 @@ void RealizarMovimiento(int[,] tablero, int filaOrigen, int colOrigen, int filaD
     tablero[filaDestino, colDestino] = tablero[filaOrigen, colOrigen]; //Copia el numero de origen y lo pega en la casilla de destino
     tablero[filaOrigen, colOrigen] = 0; //Le da el valor de 0 a la casilla vieja para no clonar el numero que se copio
 
+}
+
+//Captura obligatoria disponible
+
+bool capturaDisponible(int [,] tablero, int turnoActual)
+{
+    //Recorremos todas las casillas del tablero una por una
+    for (int fila = 0; fila < 8; fila++)
+    {
+        for (int columna = 0; columna < 8; columna++)
+        {
+            //Si no es turno de la ficha de este jugar la saltamos
+            if (tablero[fila, columna] != turnoActual)
+            {
+                continue;
+            }
+
+            //En caso de que si haya una ficha del jugador revisamos si puede comer en alguna direccion
+
+            int direccion = (turnoActual == 1) ? 1 : -1;
+            int rival = (turnoActual == 1) ? 2 : 1;
+
+            int filaSalto = fila + (direccion * 2); // 2 filas de distancia, asi salta al comer
+            int[] columnasSalto = {columna -2, columna + 2};// las 2 posibles columnas donde puede caer
+
+            foreach (int columnaSalto in columnasSalto)
+            {
+                //validamos la existencia de la casilla donde va a caer
+                if (filaSalto >= 0 && filaSalto <= 7 && columnaSalto >= 0 && columnaSalto <= 7)
+                {
+                    //punto medio es la casilla intermedia donde deberia estar el rival
+                    int filaIntermedia = (fila + filaSalto) / 2;
+                    int columnaIntermedia = (columna + columnaSalto) / 2;
+
+                    //Si en la intermedia hay un rival, y donde va a caer esta vacia, si se puede comer
+                    if (tablero[filaIntermedia, columnaIntermedia] == rival && tablero[filaSalto, columnaSalto] == 0)
+                    {
+                        return true; // Se encuentra al menos una captura disponible, no es necesario seguir buscando
+
+                    }
+                }
+            }
+        }
+    }
+    return false; //Si ya recorrimos todas las casillas y no se regresa un true es porque no hay capturas disponibles
 }
