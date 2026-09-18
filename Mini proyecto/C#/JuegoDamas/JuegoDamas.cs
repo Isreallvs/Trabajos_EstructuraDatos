@@ -59,6 +59,23 @@ while (juegoActivo) //While ya que no sabemos cuantos turnos va a durar una part
         {
             turnoActual = (turnoActual == 1) ? 2 : 1; // Nos dice si el turno actual era 1, ahora pasa a ser 2, sino pasa a ser 1
         }
+
+        //revisar si alguien se quedo sin fichas
+        int fichasClaras = contarFichas(tablero, 1);
+        int fichasOscuras = contarFichas(tablero, 2);
+
+        if (fichasClaras == 0)
+        {
+            DibujarTablero(tablero); //mostramos el tablero final
+            Console.WriteLine("Las Oscuras ganan. Ya no hay mas fichas claras.");
+            juegoActivo = false; //detenemos el while
+        }
+        else if (fichasOscuras == 0)
+        {
+            DibujarTablero(tablero);
+            Console.WriteLine("Las Claras ganan. Ya no hay mas fichas oscuras.");
+            juegoActivo = false;
+        }
         
     }
     
@@ -128,9 +145,12 @@ bool IntentarMover(int[,] tablero, int filaOrigen, int columnaOrigen, int filaDe
         Console.WriteLine("No hay ninguna ficha en esa casilla.");
         return false;
     }
+    // identificamos si la ficha del origen es del jugador en turno
+    int valorFicha = tablero[filaOrigen, columnaOrigen];// comparamos si es ficha o si es Dama (1, 2 para fichas) (3, 4 para Damas)
+    bool esFichaDelTurno = (turnoActual == 1 && (valorFicha == 1 || valorFicha == 3)) || (turnoActual == 2 && (valorFicha == 2 || valorFicha == 4));
 
-    // Si es turno de las claras (1), no puede mover una ficha oscura (2), y viceversa.
-    if (tablero[filaOrigen, columnaOrigen] != turnoActual)
+    
+    if (!esFichaDelTurno)
     {
         Console.WriteLine("Esa ficha no es tuya, no puedes moverla en este turno.");
         return false;
@@ -148,18 +168,31 @@ bool IntentarMover(int[,] tablero, int filaOrigen, int columnaOrigen, int filaDe
         return false;
     }
 
-    //Calcular direccion segun el color
-    int direccion = (turnoActual == 1) ? 1 : -1; // claras avanzan +1, oscuras -1
+    bool esDama = (valorFicha == 3 || valorFicha == 4);
 
     int distanciaFila = filaDestino - filaOrigen;
     int distanciaColumna = columnaDestino - columnaOrigen;
 
+    bool esMovimientoSimple;
+    bool esCaptura;
+
+    if (esDama)
+    {
+        esMovimientoSimple = (distanciaFila == 1 || distanciaFila == -1) && (distanciaColumna == 1 || distanciaColumna == -1);
+        esCaptura = (distanciaFila == 2 || distanciaFila == -2) && (distanciaColumna == 2 || distanciaColumna == -2);
+    }
+    else
+    {
+        //Calcular direccion segun el color
+    int direccion = (turnoActual == 1) ? 1 : -1; // claras avanzan +1, oscuras -1
+
     // Valida si el movimiento es simple (1 casilla en diagonal)
-    bool esMovimientoSimple = (distanciaFila == direccion) && (distanciaColumna == 1 || distanciaColumna == -1);
+    esMovimientoSimple = (distanciaFila == direccion) && (distanciaColumna == 1 || distanciaColumna == -1);
 
     //Valida si el movimiento es una captura (2 casillas en diagonal, saltando rival)
-    bool esCaptura = (distanciaFila == direccion * 2) && (distanciaColumna == 2 || distanciaColumna == -2);
-
+    esCaptura = (distanciaFila == direccion * 2) && (distanciaColumna == 2 || distanciaColumna == -2);
+    }
+    
     // checamos si hay una captura obligatoria en todo el tablero
     bool capturaObligatoria = capturaDisponible(tablero, turnoActual);
 
@@ -177,9 +210,11 @@ bool IntentarMover(int[,] tablero, int filaOrigen, int columnaOrigen, int filaDe
         int filaComida = (filaOrigen + filaDestino) / 2;
         int columnaComida = (columnaOrigen + columnaDestino) / 2;
 
-        int rival = (turnoActual == 1) ? 2 : 1;
+        int valorComida = tablero[filaComida, columnaComida];
+        bool esRival = (turnoActual == 1 && (valorComida == 2 || valorComida == 4)) || (turnoActual == 2 && (valorComida == 1 || valorComida == 3));
 
-        if (tablero[filaComida, columnaComida] != rival)
+
+        if (!esRival)
         {
             Console.WriteLine("No hay ficha rival para comer en ese salto.");
             return false;
@@ -267,30 +302,79 @@ bool capturaDisponible(int [,] tablero, int turnoActual)
 //Funcion para ver si una ficha especifica puede comer
 
 bool FichaPuedeComer(int[,] tablero, int fila, int columna, int turnoActual)
-{
-    int direccion = (turnoActual == 1) ? 1 : -1;
-    int rival = (turnoActual == 1) ? 2 : 1;
+{   
+    //identificamos que ficha hay realmente en la casilla
+    int valorFicha = tablero[fila, columna];
+    bool esDama = (valorFicha == 3 || valorFicha == 4);
 
-    int filaSalto = fila + (direccion * 2); // 2 filas de distancia, asi salta al comer
-    int[] columnasSalto = {columna -2, columna + 2};// las 2 posibles columnas donde puede caer
-
-    foreach (int columnaSalto in columnasSalto)
+    //armamos la lista de direccions de fila a revisar
+    int [] direccionesFila;
+    if (esDama)
     {
-        //validamos la existencia de la casilla donde va a caer
-        if (filaSalto >= 0 && filaSalto <= 7 && columnaSalto >= 0 && columnaSalto <= 7)
+        direccionesFila = new int[] { 1, -1 }; //la dama puede saltar hacia adelante y hacia atras
+
+    }
+    else
+    {
+        int direccionFija = (turnoActual == 1) ? 1 : -1;
+        direccionesFila = new int[] { direccionFija }; //ficha normal su unica direccion permitida
+
+    }
+
+    //recorremos cada direccion posible de fila
+    foreach (int direccion in direccionesFila)
+    {
+        int filaSalto = fila + (direccion * 2); // 2 filas de distancia, asi salta al comer
+        int[] columnasSalto = {columna -2, columna + 2};// las 2 posibles columnas donde puede caer
+
+        foreach (int columnaSalto in columnasSalto)
         {
-            //punto medio es la casilla intermedia donde deberia estar el rival
-            int filaIntermedia = (fila + filaSalto) / 2;
-            int columnaIntermedia = (columna + columnaSalto) / 2;
-
-            //Si en la intermedia hay un rival, y donde va a caer esta vacia, si se puede comer
-            if (tablero[filaIntermedia, columnaIntermedia] == rival && tablero[filaSalto, columnaSalto] == 0)
+            //validamos la existencia de la casilla donde va a caer
+            if (filaSalto >= 0 && filaSalto <= 7 && columnaSalto >= 0 && columnaSalto <= 7)
             {
-                return true; // Se encuentra al menos una captura disponible, no es necesario seguir buscando
+                //punto medio es la casilla intermedia donde deberia estar el rival
+                int filaIntermedia = (fila + filaSalto) / 2;
+                int columnaIntermedia = (columna + columnaSalto) / 2;
 
+                int valorIntermedio = tablero[filaIntermedia, columnaIntermedia];
+
+                //comprobar si lo que hay en medio es rival (ficha normal o Dama) 
+
+                bool esRival = (turnoActual == 1 && (valorIntermedio == 2 || valorIntermedio == 4)) || (turnoActual == 2 && (valorIntermedio == 1 || valorIntermedio == 3));
+
+                if (esRival && tablero[filaSalto, columnaSalto] == 0)
+                {
+                    return true;
+                }          
+            }
+        }
+    
+       
+    }
+
+    return false;
+}
+
+int contarFichas(int[,] tablero, int jugador)
+{
+    int contador = 0; //empieza en 0 antes de iniciar el recorrido
+
+    for (int fila = 0; fila < 8; fila++)
+    {
+        for( int columna = 0; columna < 8; columna++)
+        {
+            int valor = tablero[fila, columna];
+
+            //si el jugador es claras (1) contamos fichas normales y damas (1 y 3)
+            //si el jugador es oscura (2) contamos fichas normales y damas (2 y 4)
+            bool esDeEsteJugador = (jugador == 1 && (valor == 1 || valor == 3)) || (jugador == 2 && (valor == 2 || valor == 4));
+
+            if(esDeEsteJugador)
+            {
+                contador++; //le sumamos 1 al contador
             }
         }
     }
 
-    return false;
+    return contador; //regresamos el contador encontrado
 }
