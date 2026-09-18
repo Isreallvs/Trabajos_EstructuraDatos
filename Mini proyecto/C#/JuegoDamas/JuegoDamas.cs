@@ -22,6 +22,8 @@ for (int fila = 0; fila < 8; fila++)  // ciclo externo
     }
 }
 
+
+
 // Turnos y movimientos
 int turnoActual = 1; //Empieza en 1 porque las fichas claras empiezan el juego
 
