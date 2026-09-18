@@ -151,6 +151,12 @@ void DibujarTablero(int[,] tablero)
 //Logica del juego (Movimientos y reglas)
 bool IntentarMover(int[,] tablero, int filaOrigen, int columnaOrigen, int filaDestino, int columnaDestino, int turnoActual)
 {
+    //validar que el origen exista en el tablero
+    if (filaOrigen < 0 || filaOrigen > 7 || columnaOrigen < 0 || columnaOrigen > 7)
+    {
+        Console.WriteLine("Esa coordenada de origen no existe en el tablero.");
+        return false;
+    }
     if (tablero[filaOrigen, columnaOrigen] == 0) //Validamos que exista una ficha en el origen
     {
         Console.WriteLine("No hay ninguna ficha en esa casilla.");
