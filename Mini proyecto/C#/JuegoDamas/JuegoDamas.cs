@@ -76,6 +76,15 @@ while (juegoActivo) //While ya que no sabemos cuantos turnos va a durar una part
             Console.WriteLine("Las Claras ganan. Ya no hay mas fichas oscuras.");
             juegoActivo = false;
         }
+
+        //revisar si el jugar que sigue esta acorralado
+        else if (jugadorEstaAcorralado(tablero, turnoActual))
+        {
+            DibujarTablero(tablero);
+            string ganador = (turnoActual == 1) ? "Oscuras" : "Claras"; //gana el que no esta acorralado
+            Console.WriteLine($"Las {ganador} ganan. El otro jugador quedo acorralado/sin movimientos posibles.");
+            juegoActivo = false;
+        }
         
     }
     
@@ -377,4 +386,82 @@ int contarFichas(int[,] tablero, int jugador)
     }
 
     return contador; //regresamos el contador encontrado
+}
+
+//detectar si una ficha especifica puede hacer un movimiento simple
+bool fichaPuedeMoverse (int[,] tablero, int fila, int columna, int turnoActual)
+{
+    //identificamos que ficha hay realmente en esa casilla
+    int valorFicha = tablero[fila, columna];
+    bool esDama = (valorFicha == 3 || valorFicha == 4);
+
+
+    //Armamos la lista de direcciones de fila
+    //si es dama revisa ambas direcciones.
+    //si es ficha normal, solo su unica direccion permitida.
+    int [] direccionesFila;
+    if (esDama)
+    {
+        direccionesFila = new int [] { 1, -1 }; //Dama puede moverse hacia adelante y atras
+
+    }
+    else
+    {
+        int direccionFija = (turnoActual == 1) ? 1 : -1;
+        direccionesFila = new int[] { direccionFija }; //ficha normal con direccion unica
+    }
+    // recorremos cada direccion posible de fila (1 vuelta si es normal, 2 vueltas si es dama)
+    foreach (int direccion in direccionesFila)
+    {
+        int nuevaFila = fila + direccion;
+        int [] columnasPosibles = { columna - 1, columna + 1 }; //las dos diagonales posibles
+
+        //revisamos cada una de las 2 posibles columnas
+        foreach ( int nuevaColumna in columnasPosibles)
+        {
+            //validamos que esa casilla de destino exista dentro del tablero
+            if (nuevaFila >= 0 && nuevaFila <= 7 && nuevaColumna >= 0 && nuevaColumna <= 7)
+            {   
+                //si esa casilla destino esta vacia, si hay un movimiento simple disponible
+                if (tablero [nuevaFila, nuevaColumna] == 0)
+                {
+                    return true; // encontro al menos una casilla vacia donde moverse
+                }
+            }
+        }
+    }
+
+    return false; // si recorrimos todas las direcciones columnas posibles y ninguna sirvio, no puede moverse simple
+}
+
+//Detectar si el jugador esta acorralado
+bool jugadorEstaAcorralado (int[,] tablero, int turnoActual)
+{
+    //recorremos todas las casillas una por una
+    for (int fila = 0; fila < 8; fila++)
+    {
+        for (int columna = 0; columna < 8; columna++)
+        {
+            int valor = tablero[fila, columna];
+
+            //revisamos si la casilla tiene una ficha del jugador en turno
+            bool esDeEsteJugador = (turnoActual == 1 && (valor == 1 || valor == 3)) || (turnoActual == 2 && (valor == 2 || valor == 4));
+
+            //si no es ficha del jugador en turno la saltamos y seguimos con la siguiente casilla
+            if (!esDeEsteJugador)
+            {
+                continue;
+            }
+
+            //si la ficha si puede comer o moverse simple el jugador si tiene una opcion disponible, no esta acorralado
+            if (FichaPuedeComer(tablero, fila, columna, turnoActual) || fichaPuedeMoverse (tablero, fila, columna, turnoActual))
+
+            {
+                return false; // se encontro al menos una ficha con movimiento posible
+
+            }
+        }
+    }
+
+    return true; // si no hay movimiento posible el jugador esta acorralado
 }
