@@ -46,12 +46,12 @@ while (juegoActivo) //While ya que no sabemos cuantos turnos va a durar una part
     if (!debeSeguirComiendo)
     {
         Console.WriteLine("Qué ficha quieres mover?");
-        Console.Write("Fila origen: ");
+        
 
-        filaOrigen= int.Parse(Console.ReadLine()!); //Readline nos lee el texto pero int.parse lo convierte a numero
+        filaOrigen = pedirNumero("Fila origen: ");
 
-        Console.Write("Columna origen: ");
-        columnaOrigen = int.Parse(Console.ReadLine()!);
+        
+        columnaOrigen = pedirNumero("Columna origen: ");
 
     }
     else
@@ -75,10 +75,8 @@ while (juegoActivo) //While ya que no sabemos cuantos turnos va a durar una part
     if (esDamaSeleccionada)
     {
         //si es dama preguntamos si quiere ir adelante o atras
-        Console.Write("Deseas mover adelante o atras? (A = Adelante, T = Atras): ");
-        string teclaFila = Console.ReadLine()!.Trim().ToUpper();
-        //.Trim() quita espacios de sobra que el usuario haya escrito sin querer
-        //.ToUpper convierte lo que este escrito a letras mayusculas
+        string teclaFila = pedirTecla("Deseas mover adelante o atras? (A = Adelante, T = Atras): ", "A", "T");
+        
 
         int direccionPropia = (turnoActual == 1) ? 1 : -1; //la direccion natural de este jugador (+1 claras, -1 oscuras)
 
@@ -92,8 +90,7 @@ while (juegoActivo) //While ya que no sabemos cuantos turnos va a durar una part
     }
 
     //preguntamos si quiere moverse a izquierda o derecg¿ha
-    Console.Write("Hacía donde? (I = Izquierda, D = Derecha): ");
-    string teclaColumna = Console.ReadLine()!.Trim().ToUpper();
+    string teclaColumna = pedirTecla("Hacía donde? (I = Izquierda, D = Derecha): ", "I", "D");
     int colDir = (teclaColumna == "I") ? -1 : 1; //si escribe "I" la direccion de columna es -1 (izq), cualquier otra cosa se asume que es D la dejamos en +1 (der)
 
     //Calculamos el destino automaticamente, segun el origen y direccion elegida
@@ -130,7 +127,7 @@ while (juegoActivo) //While ya que no sabemos cuantos turnos va a durar una part
     {
         //si no hay captura probamos movimiento simple (1 casilla)
         filaDestino = filaOrigen + filaDir;
-        columnaDestino = columnaCaptura + colDir;
+        columnaDestino = columnaOrigen + colDir;
     }
 
 
@@ -388,8 +385,11 @@ bool capturaDisponible(int [,] tablero, int turnoActual)
     {
         for (int columna = 0; columna < 8; columna++)
         {
-            //Si no es turno de la ficha de este jugar la saltamos
-            if (tablero[fila, columna] != turnoActual)
+            int valor = tablero[fila, columna];
+
+            bool esDeEsteJugador = (turnoActual == 1 && (valor == 1 || valor == 3)) || (turnoActual == 2 && (valor == 2 || valor == 4));
+
+            if (!esDeEsteJugador)
             {
                 continue;
             }
@@ -559,4 +559,60 @@ bool jugadorEstaAcorralado (int[,] tablero, int turnoActual)
     }
 
     return true; // si no hay movimiento posible el jugador esta acorralado
+
+}
+
+//pedimos un numero que sea valido
+int pedirNumero(string mensaje)
+{
+    int resultado;
+    bool esValido = false;
+
+    //repetimos el bloque al menos una vez y se sigue repitiendo mientras "esValido" sea falsa
+    do
+    {
+        Console.Write(mensaje);
+        string entrada = Console.ReadLine()!;
+
+        //TryParse intenta convertir el texto a numero, si lo logra guarda el valor en resultado y regresa true
+        //si no lo logra regresa false
+        esValido = int.TryParse(entrada, out resultado);
+
+        if (!esValido)
+        {
+            Console.WriteLine("Eso no es un numero valido, intenta de nuevo.");
+
+        }
+
+    }
+    while (!esValido);
+
+    return resultado;
+}
+
+//pedimos una tecla que sea valida
+string pedirTecla (string mensaje, string opcion1, string opcion2)
+{
+    string entrada;
+    bool esValida = false;
+
+    do
+    {
+        Console.Write(mensaje);
+        entrada = Console.ReadLine()!.Trim().ToUpper(); 
+        //.Trim() quita espacios de sobra que el usuario haya escrito sin querer
+        //.ToUpper convierte lo que este escrito a letras mayusculas
+
+        //solo es valida si coincide con una de las 2 opciones permitidas
+        esValida = (entrada == opcion1 || entrada == opcion2);
+
+        if (!esValida)
+        {
+            Console.WriteLine($"Tecla no valida, escribe {opcion1} o {opcion2}.");
+        }
+
+    }
+    while (!esValida);
+
+    return entrada;
 }
