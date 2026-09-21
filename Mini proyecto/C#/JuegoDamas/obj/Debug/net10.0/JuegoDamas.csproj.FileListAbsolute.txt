@@ -13,3 +13,18 @@ C:\Users\Israe\OneDrive\Escritorio\Trabajos Progra\Tarea-Hola-Mundo-v2\Mini proy
 C:\Users\Israe\OneDrive\Escritorio\Trabajos Progra\Tarea-Hola-Mundo-v2\Mini proyecto\C#\JuegoDamas\obj\Debug\net10.0\JuegoDamas.pdb
 C:\Users\Israe\OneDrive\Escritorio\Trabajos Progra\Tarea-Hola-Mundo-v2\Mini proyecto\C#\JuegoDamas\obj\Debug\net10.0\JuegoDamas.genruntimeconfig.cache
 C:\Users\Israe\OneDrive\Escritorio\Trabajos Progra\Tarea-Hola-Mundo-v2\Mini proyecto\C#\JuegoDamas\obj\Debug\net10.0\ref\JuegoDamas.dll
+C:\Users\jessg\OneDrive\Desktop\Tareas Hola mundo\Mini proyecto\C#\JuegoDamas\bin\Debug\net10.0\JuegoDamas.exe
+C:\Users\jessg\OneDrive\Desktop\Tareas Hola mundo\Mini proyecto\C#\JuegoDamas\bin\Debug\net10.0\JuegoDamas.deps.json
+C:\Users\jessg\OneDrive\Desktop\Tareas Hola mundo\Mini proyecto\C#\JuegoDamas\bin\Debug\net10.0\JuegoDamas.runtimeconfig.json
+C:\Users\jessg\OneDrive\Desktop\Tareas Hola mundo\Mini proyecto\C#\JuegoDamas\bin\Debug\net10.0\JuegoDamas.dll
+C:\Users\jessg\OneDrive\Desktop\Tareas Hola mundo\Mini proyecto\C#\JuegoDamas\bin\Debug\net10.0\JuegoDamas.pdb
+C:\Users\jessg\OneDrive\Desktop\Tareas Hola mundo\Mini proyecto\C#\JuegoDamas\obj\Debug\net10.0\JuegoDamas.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\jessg\OneDrive\Desktop\Tareas Hola mundo\Mini proyecto\C#\JuegoDamas\obj\Debug\net10.0\JuegoDamas.AssemblyInfoInputs.cache
+C:\Users\jessg\OneDrive\Desktop\Tareas Hola mundo\Mini proyecto\C#\JuegoDamas\obj\Debug\net10.0\JuegoDamas.AssemblyInfo.cs
+C:\Users\jessg\OneDrive\Desktop\Tareas Hola mundo\Mini proyecto\C#\JuegoDamas\obj\Debug\net10.0\JuegoDamas.csproj.CoreCompileInputs.cache
+C:\Users\jessg\OneDrive\Desktop\Tareas Hola mundo\Mini proyecto\C#\JuegoDamas\obj\Debug\net10.0\JuegoDamas.sourcelink.json
+C:\Users\jessg\OneDrive\Desktop\Tareas Hola mundo\Mini proyecto\C#\JuegoDamas\obj\Debug\net10.0\JuegoDamas.dll
+C:\Users\jessg\OneDrive\Desktop\Tareas Hola mundo\Mini proyecto\C#\JuegoDamas\obj\Debug\net10.0\refint\JuegoDamas.dll
+C:\Users\jessg\OneDrive\Desktop\Tareas Hola mundo\Mini proyecto\C#\JuegoDamas\obj\Debug\net10.0\JuegoDamas.pdb
+C:\Users\jessg\OneDrive\Desktop\Tareas Hola mundo\Mini proyecto\C#\JuegoDamas\obj\Debug\net10.0\JuegoDamas.genruntimeconfig.cache
+C:\Users\jessg\OneDrive\Desktop\Tareas Hola mundo\Mini proyecto\C#\JuegoDamas\obj\Debug\net10.0\ref\JuegoDamas.dll
