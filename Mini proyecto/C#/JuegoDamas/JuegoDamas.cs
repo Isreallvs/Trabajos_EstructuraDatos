@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using System.Runtime.InteropServices;
 Console.OutputEncoding = System.Text.Encoding.UTF8;
 
 //Configuracion inicial del tablero
@@ -31,6 +32,9 @@ bool juegoActivo = true; //Se usa como interruptor, para saber si el juego debe 
 
 bool debeSeguirComiendo = false; //para saber si el mismo jugador debe seguir jugando
 
+int filaOrigen = 0;
+int columnaOrigen = 0;
+
 while (juegoActivo) //While ya que no sabemos cuantos turnos va a durar una partida
 {
     DibujarTablero(tablero); //mostramos el tablero actual en cada turno
@@ -38,20 +42,97 @@ while (juegoActivo) //While ya que no sabemos cuantos turnos va a durar una part
     String colorTurno = (turnoActual == 1) ? "Claras" : "Oscuras";
     Console.WriteLine($"Turno del jugador: {colorTurno}");
 
+    //solo preguntamos el origen si no venimos de captura en cadena
+    if (!debeSeguirComiendo)
+    {
+        Console.WriteLine("Qué ficha quieres mover?");
+        Console.Write("Fila origen: ");
 
-    Console.WriteLine("Qué ficha quieres mover?");
-    Console.Write("Fila origen: ");
+        filaOrigen= int.Parse(Console.ReadLine()!); //Readline nos lee el texto pero int.parse lo convierte a numero
 
-    int filaOrigen= int.Parse(Console.ReadLine()!); //Readline nos lee el texto pero int.parse lo convierte a numero
+        Console.Write("Columna origen: ");
+        columnaOrigen = int.Parse(Console.ReadLine()!);
 
-    Console.Write("Columna origen: ");
-    int columnaOrigen = int.Parse(Console.ReadLine()!);
+    }
+    else
+    {   
+        //si si debe seguir comiendo le avisamos con que ficha sigue jugando
+        Console.WriteLine($"Sigues comiendo con la ficha en ({filaOrigen}, {columnaOrigen})");
+    }
 
-    Console.WriteLine("A donde la quieres mover?");
-    Console.Write("Fila destino: ");
-    int filaDestino = int.Parse(Console.ReadLine()!);
-    Console.Write("Columna destino: ");
-    int columnaDestino = int.Parse(Console.ReadLine()!);
+    if (filaOrigen < 0 || filaOrigen > 7 || columnaOrigen < 0 || columnaOrigen > 7)
+    {
+        Console.WriteLine("Esa coordenada de origen no existe en el tablero.");
+        continue; //reinicia el turno desde el principio
+    }
+
+    //identificamos si la ficha es dama, para saber si hace falta preguntar adelante / atras, o si su direccion ya es fija
+    int valorFichaseleccionada = tablero[filaOrigen, columnaOrigen];
+    bool esDamaSeleccionada = (valorFichaseleccionada == 3 || valorFichaseleccionada == 4);
+
+    int filaDir; //guarda hacia que fila se va a mover (-1 o 1)
+
+    if (esDamaSeleccionada)
+    {
+        //si es dama preguntamos si quiere ir adelante o atras
+        Console.Write("Deseas mover adelante o atras? (A = Adelante, T = Atras): ");
+        string teclaFila = Console.ReadLine()!.Trim().ToUpper();
+        //.Trim() quita espacios de sobra que el usuario haya escrito sin querer
+        //.ToUpper convierte lo que este escrito a letras mayusculas
+
+        int direccionPropia = (turnoActual == 1) ? 1 : -1; //la direccion natural de este jugador (+1 claras, -1 oscuras)
+
+        //si elige adelante usamos su direccion natural, si elige atras usamos la direccion contraria
+        filaDir = (teclaFila == "A") ? direccionPropia : -direccionPropia;
+    }
+    else
+    {
+        //si es ficha normal su direccion siempre es la misma
+        filaDir = (turnoActual == 1) ? 1 : -1;
+    }
+
+    //preguntamos si quiere moverse a izquierda o derecg¿ha
+    Console.Write("Hacía donde? (I = Izquierda, D = Derecha): ");
+    string teclaColumna = Console.ReadLine()!.Trim().ToUpper();
+    int colDir = (teclaColumna == "I") ? -1 : 1; //si escribe "I" la direccion de columna es -1 (izq), cualquier otra cosa se asume que es D la dejamos en +1 (der)
+
+    //Calculamos el destino automaticamente, segun el origen y direccion elegida
+
+    //Revisamos si en esa diagonal especifica hay una captura disponible (salto de 2)
+    int filaCaptura = filaOrigen + (filaDir * 2);
+    int columnaCaptura = columnaOrigen + (colDir * 2);
+
+    bool hayCapturaEnEstaDiagonal = false;
+    if (filaCaptura >= 0 && filaCaptura <= 7 && columnaCaptura >= 0 && columnaCaptura <= 7)
+    {
+        int filaIntermedia = (filaOrigen + filaCaptura) / 2;
+        int columnaIntermedia = (columnaOrigen + columnaCaptura) / 2;
+        int valorIntermedio = tablero[filaIntermedia, columnaIntermedia];
+
+        bool esRivalAqui = (turnoActual == 1 && (valorIntermedio == 2 || valorIntermedio == 4 )) || (turnoActual == 2 && (valorIntermedio == 1 || valorIntermedio == 3));
+
+        if (esRivalAqui && tablero[filaCaptura, columnaCaptura] == 0)
+        {
+            hayCapturaEnEstaDiagonal = true;
+        }
+    }
+
+    int filaDestino;
+    int columnaDestino;
+
+    if (hayCapturaEnEstaDiagonal)
+    {
+        //si hay captura en esa diagonal la usamos
+        filaDestino = filaCaptura;
+        columnaDestino = columnaCaptura;
+    }
+    else
+    {
+        //si no hay captura probamos movimiento simple (1 casilla)
+        filaDestino = filaOrigen + filaDir;
+        columnaDestino = columnaCaptura + colDir;
+    }
+
 
     bool movimientoExitoso = IntentarMover(tablero, filaOrigen, columnaOrigen, filaDestino, columnaDestino, turnoActual); // Probamos el radar con una ficha especifica
 
@@ -60,6 +141,12 @@ while (juegoActivo) //While ya que no sabemos cuantos turnos va a durar una part
         if (!debeSeguirComiendo)
         {
             turnoActual = (turnoActual == 1) ? 2 : 1; // Nos dice si el turno actual era 1, ahora pasa a ser 2, sino pasa a ser 1
+        }
+        else
+        {
+            //si debe seguir comiendo el origen del proximo turno es el destino de este
+            filaOrigen = filaDestino;
+            columnaOrigen = columnaDestino;
         }
 
         //revisar si alguien se quedo sin fichas
