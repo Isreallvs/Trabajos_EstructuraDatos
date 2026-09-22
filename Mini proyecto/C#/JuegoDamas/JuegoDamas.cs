@@ -35,10 +35,21 @@ bool debeSeguirComiendo = false; //para saber si el mismo jugador debe seguir ju
 int filaOrigen = 0;
 int columnaOrigen = 0;
 
+
+// Bloque de menu inicial 
+Console.WriteLine("--- Bienvenido al juego Damas Inglesas ---");
+Console.WriteLine("¿Qué deseas hacer?");
+Console.WriteLine();
+Console.WriteLine("1. Nueva partida");
+Console.WriteLine("2. Cargar partida guardada");
+Console.WriteLine("3. Salir");
+Console.WriteLine();
+
+
 //bloque del nombre del archivo
 string nombreArchivo = "";
 
-string opcionMenu = pedirTecla("", "1", "2", "3");
+string opcionMenu = pedirTecla("Elige una opcion (1, 2 o 3): ", "1", "2", "3");
 
 if (opcionMenu == "3")
 {
@@ -234,6 +245,19 @@ while (juegoActivo) //While ya que no sabemos cuantos turnos va a durar una part
             juegoActivo = false;
         }
         
+        if (juegoActivo)
+        {
+            bool seGuardoCorrectamente = guardarPartida(nombreArchivo, tablero, turnoActual, debeSeguirComiendo, filaOrigen, columnaOrigen);
+
+            if (seGuardoCorrectamente)
+            {
+                Console.WriteLine("Partida guardada exitosamente.");
+            }
+            else
+            {
+                Console.WriteLine("No se pudo guardar la partida.");
+            }
+        }
     }
     
 }
@@ -687,17 +711,6 @@ string pedirTecla (string mensaje, params string[] opcionesValidas)
 
     return entrada;
 }
-
-// Bloque de menu inicial 
-Console.WriteLine("--- Bienvenido al juego Damas Inglesas ---");
-Console.WriteLine("¿Qué deseas hacer?");
-Console.WriteLine();
-Console.WriteLine("1. Nueva partida");
-Console.WriteLine("2. Cargar partida guardada");
-Console.WriteLine("3. Salir");
-Console.WriteLine();
-
-
 
 //bloque para limpiar el nombre del archivo
 string limpiarNombreArchivo(string nombreEscrito)
