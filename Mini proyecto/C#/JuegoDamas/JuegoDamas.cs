@@ -591,7 +591,7 @@ int pedirNumero(string mensaje)
 }
 
 //pedimos una tecla que sea valida
-string pedirTecla (string mensaje, string opcion1, string opcion2)
+string pedirTecla (string mensaje, params string[] opcionesValidas)
 {
     string entrada;
     bool esValida = false;
@@ -603,12 +603,21 @@ string pedirTecla (string mensaje, string opcion1, string opcion2)
         //.Trim() quita espacios de sobra que el usuario haya escrito sin querer
         //.ToUpper convierte lo que este escrito a letras mayusculas
 
-        //solo es valida si coincide con una de las 2 opciones permitidas
-        esValida = (entrada == opcion1 || entrada == opcion2);
+        //Recorremos el arreglo de opciones valida buscando si entrada coincide con alguna
+        esValida = false;
+        foreach (string opcion in opcionesValidas)
+        {
+            if (entrada == opcion)
+            {
+                esValida = true;
+            }
+        }
 
         if (!esValida)
         {
-            Console.WriteLine($"Tecla no valida, escribe {opcion1} o {opcion2}.");
+            //Armamos un texto tipo "1, 2 o 3" para mostrar las opciones validas en el mensaje de error
+            string listaOpciones = string.Join(", ", opcionesValidas);
+            Console.WriteLine($"Opción no valida, escribe una de estas: {listaOpciones}");
         }
 
     }
@@ -616,3 +625,12 @@ string pedirTecla (string mensaje, string opcion1, string opcion2)
 
     return entrada;
 }
+
+// Bloque de menu inicial 
+Console.WriteLine("--- Bienvenido al juego Damas Inglesas ---");
+Console.WriteLine("¿Qué deseas hacer?");
+Console.WriteLine();
+Console.WriteLine("1. Nueva partida");
+Console.WriteLine("2. Cargar partida guardada");
+Console.WriteLine("3. Salir");
+Console.WriteLine();
