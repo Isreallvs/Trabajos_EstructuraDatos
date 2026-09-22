@@ -673,6 +673,28 @@ else if (opcionMenu == "2")
     Console.Write("Qué partida quieres cargar?: ");
     string entradaNombre = Console.ReadLine()!;
     nombreArchivo = limpiarNombreArchivo(entradaNombre);
+
+    string carpetaPartidas = "Partidas"; //definimos la carpeta donde se guardaran las partidas
+    Directory.CreateDirectory(carpetaPartidas);//creamos la carpeta
+
+    string rutaPartida = Path.Combine(carpetaPartidas, nombreArchivo); //une carpeta y archivo en una ruta valida
+
+    if (!File.Exists(rutaPartida)) //revisa si realmente existe el archivo que pidio el jugador
+    {
+        Console.WriteLine("No se encontro esa partida guardada."); 
+        return; 
+    }
+
+    bool seCargoCorrectamente = CargarPartida (rutaPartida, tablero, ref turnoActual, ref debeSeguirComiendo, ref filaOrigen, ref columnaOrigen);
+
+    //revisa si el archivo tenia datos dañados o un formato incorrecto
+    if (!seCargoCorrectamente)
+    {
+        Console.WriteLine("La partida existe, pero sus datos no son validos.");
+        return;
+    }
+
+    Console.WriteLine("Partida cargada con exito.");// confirma que todo salio bien
 }
 
 //bloque para limpiar el nombre del archivo
@@ -693,3 +715,96 @@ string limpiarNombreArchivo(string nombreEscrito)
     //ahora le agregamos un ".txt" una sola vez para garantizar que se guarde bien
     return nombreLimpio + ".txt";
 }
+
+//bloque de cargar partida
+bool CargarPartida (string rutaPartida, int[,] tablero, ref int turnoActual, ref bool debeSeguirComiendo, ref int filaOrigen, ref int columnaOrigen)
+{
+    try //intenta leer y convertir los datos
+    {
+        string[] lineas = File.ReadAllLines(rutaPartida); //lee todas las lineas del archivo y las guarda en un arreglo
+        
+        if (lineas.Length != 11)// verifica que existan 3 lineas de datos generales y 8 filas de tablero
+        {
+            return false;// detenemos la carga si el formato del archivo no coincide
+        }
+
+        bool turnoEsValido = int.TryParse(lineas[0], out int turnoLeido); //convierte la primera linea en el turno guardado
+
+        if (!turnoEsValido || (turnoLeido != 1 && turnoLeido != 2))// revisa que los turnos sean unicamente 1 o 2
+        {
+            return false;//el archivo no tiene el formato esperado
+        }
+
+        bool cadenaEsValida = bool.TryParse(lineas[1], out bool cadenaLeida);//convierte la segunda linea en true o false
+        
+        if (!cadenaEsValida)//revisamos que la segunda linea sea un booleano
+        {
+            return false;//el archivo no tiene el formato esperado
+        }
+
+        string[] coordenadas = lineas[2].Split(','); //separa la tercera linea usando la coma
+
+        if (coordenadas.Length != 2) //revisamos que existan exactamente la fila y columna
+        {
+            return false;
+        }
+
+        bool filaEsValida = int.TryParse(coordenadas[0], out int filaLeida); //convierte el primer valor en la fila guardada
+        bool columnaEsValida = int.TryParse(coordenadas[1], out int columnaLeida);//convierte el segundo valor en la columna guardada
+
+        if (!filaEsValida || !columnaEsValida)
+        {
+            return false;//no se carga si las coordenadas no son numeros
+        }
+
+        if (filaLeida < 0 || filaLeida > 7 || columnaLeida < 0 || columnaLeida > 7) //comprobamos que las coordenadas estén dentro del tablero.
+        {
+            return false; //no permite cargar coordenadas fuera del tablero.
+        }
+
+        int[,] tableroLeido = new int[8, 8]; //creamos un tablero temporal para validar todo antes de cambiar el tablero real.
+
+        for (int fila = 0; fila < 8; fila++) //recorre las ocho filas que se guardaron.
+        {
+            string[] valoresFila = lineas[fila + 3].Split(','); //lee una fila del archivo y separa sus valores por comas.
+
+            if (valoresFila.Length != 8) //revisa que cada fila tenga exactamente ocho casillas.
+            {
+                return false; //el formato no es válido si faltan o sobran casillas.
+            }
+
+            for (int columna = 0; columna < 8; columna++) //lo mismo para las columnas
+            {
+                bool valorEsValido = int.TryParse(valoresFila[columna], out int valorCasilla); //convierte el texto de la casilla en número.
+
+                if (!valorEsValido || valorCasilla < 0 || valorCasilla > 4) //revisa que sea un valor permitido del tablero.
+                {
+                    return false; //solo se aceptamos 0, 1, 2, 3 o 4.
+                }
+
+                tableroLeido[fila, columna] = valorCasilla; // Guarda el valor validado en el tablero temporal.
+            }
+        
+        }
+
+        turnoActual = turnoLeido; //recuperamos el turno que estaba guardado
+        debeSeguirComiendo = cadenaLeida; //recupera si habia una captera en cadena
+        filaOrigen = filaLeida;//se recupera la fila de la ficha que estaba jugando
+        columnaOrigen = columnaLeida;//se recupera la columna tambien de la ficha que estaba jugando
+
+        for (int fila = 0; fila < 8; fila++) // Recorre las filas del tablero temporal.
+        {
+            for (int columna = 0; columna < 8; columna++) // Recorre las columnas del tablero temporal.
+            {
+                tablero[fila, columna] = tableroLeido[fila, columna]; // Copia cada valor validado al tablero real del juego.
+            }
+        }
+
+        return true; // Informa que todos los datos se cargaron correctamente.
+    }
+    catch // Captura errores como archivo inaccesible, vacío o problemas de lectura.
+    {
+        return false; // Informa que no se pudo cargar la partida.
+    }
+}
+        
