@@ -800,11 +800,47 @@ bool CargarPartida (string rutaPartida, int[,] tablero, ref int turnoActual, ref
             }
         }
 
-        return true; // Informa que todos los datos se cargaron correctamente.
+        return true; //informa que todos los datos se cargaron correctamente.
     }
-    catch // Captura errores como archivo inaccesible, vacío o problemas de lectura.
+    catch //captura errores como archivo inaccesible, vacío o problemas de lectura.
     {
-        return false; // Informa que no se pudo cargar la partida.
+        return false; //informa que no se pudo cargar la partida.
     }
 }
         
+bool guardarPartida(string nombreArchivo, int[,] tablero, int turnoActual, bool debeSeguirComiendo, int filaOrigen, int columnaOrigen)
+{
+    try //intenta crear la carpeta y escribir el archivo
+    {
+        string carpetaPartidas = "Partidas";// donde se guardaran todas las partidas
+        Directory.CreateDirectory(carpetaPartidas);
+
+        string rutaPartida = Path.Combine(carpetaPartidas, nombreArchivo);// unimos la carpeta con el nombre del archivo
+
+        string[] lineas = new string[11];// creamos un arreglo para las 3 lineas generales y las 8 filas del tablero
+        lineas[0] = turnoActual.ToString();//guardamos el turno actual en la primera linea
+        lineas[1] = debeSeguirComiendo.ToString();//guarda si es verdadero o falso el que siga comiendo en la segunda linea
+        lineas[2] = $"{filaOrigen},{columnaOrigen}";// guardamos fila y columna separadas por una coma
+
+        for (int fila = 0; fila < 8; fila++) //recorremos las  8 filas del tablero
+        {
+            string[] valoresFila = new string[8]; //creamos un arreglo temporal para los ocho valores de esta fila.
+
+            for (int columna = 0; columna < 8; columna++) //recorremos las ocho columnas de la fila actual.
+            {
+                valoresFila[columna] = tablero[fila, columna].ToString();//convertimos el número de la casilla a texto.
+            }
+
+            lineas[fila + 3] = string.Join(",", valoresFila); //unimos los ocho valores con comas y los guarda desde la línea 4.
+        }
+
+        File.WriteAllLines(rutaPartida, lineas); //escribimos todas las lineas en el archivo de la partida
+
+        return true;
+
+    }
+    catch //atrapa errores que no permiten guardar la partida
+    {
+        return false;
+    }
+}
