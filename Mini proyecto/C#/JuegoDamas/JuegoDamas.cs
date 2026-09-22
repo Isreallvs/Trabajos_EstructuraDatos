@@ -93,6 +93,8 @@ else if (opcionMenu == "2")
 
 while (juegoActivo) //While ya que no sabemos cuantos turnos va a durar una partida
 {
+    Console.Clear();
+
     DibujarTablero(tablero); //mostramos el tablero actual en cada turno
 
     String colorTurno = (turnoActual == 1) ? "Claras" : "Oscuras";
