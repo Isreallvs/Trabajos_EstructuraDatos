@@ -4,10 +4,10 @@ Console.OutputEncoding = System.Text.Encoding.UTF8;
 
 //Configuracion inicial del tablero
 
-int[,] tablero = new int [8, 8];
+int[,] tablero = new int[8, 8];
 for (int fila = 0; fila < 8; fila++)  // ciclo externo
 {
-    for (int columna = 0; columna < 8; columna ++) // ciclo interno
+    for (int columna = 0; columna < 8; columna++) // ciclo interno
     {
         if ((fila + columna) % 2 != 0) // solo casillas oscuras
         {
@@ -75,11 +75,11 @@ else if (opcionMenu == "2")
 
     if (!File.Exists(rutaPartida)) //revisa si realmente existe el archivo que pidio el jugador
     {
-        Console.WriteLine("No se encontro esa partida guardada."); 
-        return; 
+        Console.WriteLine("No se encontro esa partida guardada.");
+        return;
     }
 
-    bool seCargoCorrectamente = CargarPartida (rutaPartida, tablero, ref turnoActual, ref debeSeguirComiendo, ref filaOrigen, ref columnaOrigen);
+    bool seCargoCorrectamente = CargarPartida(rutaPartida, tablero, ref turnoActual, ref debeSeguirComiendo, ref filaOrigen, ref columnaOrigen);
 
     //revisa si el archivo tenia datos dañados o un formato incorrecto
     if (!seCargoCorrectamente)
@@ -104,16 +104,16 @@ while (juegoActivo) //While ya que no sabemos cuantos turnos va a durar una part
     if (!debeSeguirComiendo)
     {
         Console.WriteLine("Qué ficha quieres mover?");
-        
+
 
         filaOrigen = pedirNumero("Fila origen: ");
 
-        
+
         columnaOrigen = pedirNumero("Columna origen: ");
 
     }
     else
-    {   
+    {
         //si si debe seguir comiendo le avisamos con que ficha sigue jugando
         Console.WriteLine($"Sigues comiendo con la ficha en ({filaOrigen}, {columnaOrigen})");
     }
@@ -121,6 +121,7 @@ while (juegoActivo) //While ya que no sabemos cuantos turnos va a durar una part
     if (filaOrigen < 0 || filaOrigen > 7 || columnaOrigen < 0 || columnaOrigen > 7)
     {
         Console.WriteLine("Esa coordenada de origen no existe en el tablero.");
+        System.Threading.Thread.Sleep(2000);
         continue; //reinicia el turno desde el principio
     }
 
@@ -131,6 +132,7 @@ while (juegoActivo) //While ya que no sabemos cuantos turnos va a durar una part
     if (valorFichaseleccionada == 0)
     {
         Console.WriteLine("No hay ninguna ficha en esa casilla.");
+        System.Threading.Thread.Sleep(2000);
         continue;
     }
 
@@ -140,6 +142,7 @@ while (juegoActivo) //While ya que no sabemos cuantos turnos va a durar una part
     if (!esFichaDelTurno)
     {
         Console.WriteLine("Esa ficha no es tuya, no puedes moverla en este turno.");
+        System.Threading.Thread.Sleep(2000);
         continue;
     }
 
@@ -151,7 +154,7 @@ while (juegoActivo) //While ya que no sabemos cuantos turnos va a durar una part
     {
         //si es dama preguntamos si quiere ir adelante o atras
         string teclaFila = pedirTecla("Deseas mover adelante o atras? (A = Adelante, T = Atras): ", "A", "T");
-        
+
 
         int direccionPropia = (turnoActual == 1) ? 1 : -1; //la direccion natural de este jugador (+1 claras, -1 oscuras)
 
@@ -181,7 +184,7 @@ while (juegoActivo) //While ya que no sabemos cuantos turnos va a durar una part
         int columnaIntermedia = (columnaOrigen + columnaCaptura) / 2;
         int valorIntermedio = tablero[filaIntermedia, columnaIntermedia];
 
-        bool esRivalAqui = (turnoActual == 1 && (valorIntermedio == 2 || valorIntermedio == 4 )) || (turnoActual == 2 && (valorIntermedio == 1 || valorIntermedio == 3));
+        bool esRivalAqui = (turnoActual == 1 && (valorIntermedio == 2 || valorIntermedio == 4)) || (turnoActual == 2 && (valorIntermedio == 1 || valorIntermedio == 3));
 
         if (esRivalAqui && tablero[filaCaptura, columnaCaptura] == 0)
         {
@@ -246,7 +249,7 @@ while (juegoActivo) //While ya que no sabemos cuantos turnos va a durar una part
             Console.WriteLine($"Las {ganador} ganan. El otro jugador quedo acorralado/sin movimientos posibles.");
             juegoActivo = false;
         }
-        
+
         if (juegoActivo)
         {
             bool seGuardoCorrectamente = guardarPartida(nombreArchivo, tablero, turnoActual, debeSeguirComiendo, filaOrigen, columnaOrigen);
@@ -259,9 +262,15 @@ while (juegoActivo) //While ya que no sabemos cuantos turnos va a durar una part
             {
                 Console.WriteLine("No se pudo guardar la partida.");
             }
+
+            System.Threading.Thread.Sleep(2000);//esperamos un segundo antes de limpiar y mostrar el siguiente tablero
         }
     }
-    
+    if (!movimientoExitoso)
+    {
+        System.Threading.Thread.Sleep(2000);
+    }
+
 }
 
 
@@ -306,7 +315,7 @@ void DibujarTablero(int[,] tablero)
             }
             else
             {
-                Console.ForegroundColor = ConsoleColor.Gray; 
+                Console.ForegroundColor = ConsoleColor.Gray;
             }
 
             Console.Write(simbolo + " ");
@@ -327,21 +336,24 @@ bool IntentarMover(int[,] tablero, int filaOrigen, int columnaOrigen, int filaDe
     if (filaOrigen < 0 || filaOrigen > 7 || columnaOrigen < 0 || columnaOrigen > 7)
     {
         Console.WriteLine("Esa coordenada de origen no existe en el tablero.");
+        
         return false;
     }
     if (tablero[filaOrigen, columnaOrigen] == 0) //Validamos que exista una ficha en el origen
     {
         Console.WriteLine("No hay ninguna ficha en esa casilla.");
+        
         return false;
     }
     // identificamos si la ficha del origen es del jugador en turno
     int valorFicha = tablero[filaOrigen, columnaOrigen];// comparamos si es ficha o si es Dama (1, 2 para fichas) (3, 4 para Damas)
     bool esFichaDelTurno = (turnoActual == 1 && (valorFicha == 1 || valorFicha == 3)) || (turnoActual == 2 && (valorFicha == 2 || valorFicha == 4));
 
-    
+
     if (!esFichaDelTurno)
     {
         Console.WriteLine("Esa ficha no es tuya, no puedes moverla en este turno.");
+        
         return false;
     }
 
@@ -373,15 +385,15 @@ bool IntentarMover(int[,] tablero, int filaOrigen, int columnaOrigen, int filaDe
     else
     {
         //Calcular direccion segun el color
-    int direccion = (turnoActual == 1) ? 1 : -1; // claras avanzan +1, oscuras -1
+        int direccion = (turnoActual == 1) ? 1 : -1; // claras avanzan +1, oscuras -1
 
-    // Valida si el movimiento es simple (1 casilla en diagonal)
-    esMovimientoSimple = (distanciaFila == direccion) && (distanciaColumna == 1 || distanciaColumna == -1);
+        // Valida si el movimiento es simple (1 casilla en diagonal)
+        esMovimientoSimple = (distanciaFila == direccion) && (distanciaColumna == 1 || distanciaColumna == -1);
 
-    //Valida si el movimiento es una captura (2 casillas en diagonal, saltando rival)
-    esCaptura = (distanciaFila == direccion * 2) && (distanciaColumna == 2 || distanciaColumna == -2);
+        //Valida si el movimiento es una captura (2 casillas en diagonal, saltando rival)
+        esCaptura = (distanciaFila == direccion * 2) && (distanciaColumna == 2 || distanciaColumna == -2);
     }
-    
+
     // checamos si hay una captura obligatoria en todo el tablero
     bool capturaObligatoria = capturaDisponible(tablero, turnoActual);
 
@@ -413,9 +425,9 @@ bool IntentarMover(int[,] tablero, int filaOrigen, int columnaOrigen, int filaDe
         RealizarMovimiento(tablero, filaOrigen, columnaOrigen, filaDestino, columnaDestino);
         tablero[filaComida, columnaComida] = 0;
         Console.WriteLine($"Comiste una ficha en ({filaComida}, {columnaComida})");
-        
+
         //preguntamos si desde la nueva posicion puede seguir comiendo
-        if (FichaPuedeComer (tablero, filaDestino, columnaDestino, turnoActual))
+        if (FichaPuedeComer(tablero, filaDestino, columnaDestino, turnoActual))
         {
             Console.WriteLine("Puedes seguir comiendo con la misma ficha. Vuelve a mover.");
             debeSeguirComiendo = true; //Avisamos que el jugador deber repetir turno
@@ -466,7 +478,7 @@ void RealizarMovimiento(int[,] tablero, int filaOrigen, int colOrigen, int filaD
 
 //Captura obligatoria disponible
 
-bool capturaDisponible(int [,] tablero, int turnoActual)
+bool capturaDisponible(int[,] tablero, int turnoActual)
 {
     //Recorremos todas las casillas del tablero una por una
     for (int fila = 0; fila < 8; fila++)
@@ -482,10 +494,10 @@ bool capturaDisponible(int [,] tablero, int turnoActual)
                 continue;
             }
 
-            if (FichaPuedeComer( tablero, fila, columna, turnoActual))
+            if (FichaPuedeComer(tablero, fila, columna, turnoActual))
             {
                 return true;
-            }            
+            }
         }
     }
     return false; //Si ya recorrimos todas las casillas y no se regresa un true es porque no hay capturas disponibles
@@ -494,13 +506,13 @@ bool capturaDisponible(int [,] tablero, int turnoActual)
 //Funcion para ver si una ficha especifica puede comer
 
 bool FichaPuedeComer(int[,] tablero, int fila, int columna, int turnoActual)
-{   
+{
     //identificamos que ficha hay realmente en la casilla
     int valorFicha = tablero[fila, columna];
     bool esDama = (valorFicha == 3 || valorFicha == 4);
 
     //armamos la lista de direccions de fila a revisar
-    int [] direccionesFila;
+    int[] direccionesFila;
     if (esDama)
     {
         direccionesFila = new int[] { 1, -1 }; //la dama puede saltar hacia adelante y hacia atras
@@ -517,7 +529,7 @@ bool FichaPuedeComer(int[,] tablero, int fila, int columna, int turnoActual)
     foreach (int direccion in direccionesFila)
     {
         int filaSalto = fila + (direccion * 2); // 2 filas de distancia, asi salta al comer
-        int[] columnasSalto = {columna -2, columna + 2};// las 2 posibles columnas donde puede caer
+        int[] columnasSalto = { columna - 2, columna + 2 };// las 2 posibles columnas donde puede caer
 
         foreach (int columnaSalto in columnasSalto)
         {
@@ -537,11 +549,11 @@ bool FichaPuedeComer(int[,] tablero, int fila, int columna, int turnoActual)
                 if (esRival && tablero[filaSalto, columnaSalto] == 0)
                 {
                     return true;
-                }          
+                }
             }
         }
-    
-       
+
+
     }
 
     return false;
@@ -553,7 +565,7 @@ int contarFichas(int[,] tablero, int jugador)
 
     for (int fila = 0; fila < 8; fila++)
     {
-        for( int columna = 0; columna < 8; columna++)
+        for (int columna = 0; columna < 8; columna++)
         {
             int valor = tablero[fila, columna];
 
@@ -561,7 +573,7 @@ int contarFichas(int[,] tablero, int jugador)
             //si el jugador es oscura (2) contamos fichas normales y damas (2 y 4)
             bool esDeEsteJugador = (jugador == 1 && (valor == 1 || valor == 3)) || (jugador == 2 && (valor == 2 || valor == 4));
 
-            if(esDeEsteJugador)
+            if (esDeEsteJugador)
             {
                 contador++; //le sumamos 1 al contador
             }
@@ -572,7 +584,7 @@ int contarFichas(int[,] tablero, int jugador)
 }
 
 //detectar si una ficha especifica puede hacer un movimiento simple
-bool fichaPuedeMoverse (int[,] tablero, int fila, int columna, int turnoActual)
+bool fichaPuedeMoverse(int[,] tablero, int fila, int columna, int turnoActual)
 {
     //identificamos que ficha hay realmente en esa casilla
     int valorFicha = tablero[fila, columna];
@@ -582,10 +594,10 @@ bool fichaPuedeMoverse (int[,] tablero, int fila, int columna, int turnoActual)
     //Armamos la lista de direcciones de fila
     //si es dama revisa ambas direcciones.
     //si es ficha normal, solo su unica direccion permitida.
-    int [] direccionesFila;
+    int[] direccionesFila;
     if (esDama)
     {
-        direccionesFila = new int [] { 1, -1 }; //Dama puede moverse hacia adelante y atras
+        direccionesFila = new int[] { 1, -1 }; //Dama puede moverse hacia adelante y atras
 
     }
     else
@@ -597,16 +609,16 @@ bool fichaPuedeMoverse (int[,] tablero, int fila, int columna, int turnoActual)
     foreach (int direccion in direccionesFila)
     {
         int nuevaFila = fila + direccion;
-        int [] columnasPosibles = { columna - 1, columna + 1 }; //las dos diagonales posibles
+        int[] columnasPosibles = { columna - 1, columna + 1 }; //las dos diagonales posibles
 
         //revisamos cada una de las 2 posibles columnas
-        foreach ( int nuevaColumna in columnasPosibles)
+        foreach (int nuevaColumna in columnasPosibles)
         {
             //validamos que esa casilla de destino exista dentro del tablero
             if (nuevaFila >= 0 && nuevaFila <= 7 && nuevaColumna >= 0 && nuevaColumna <= 7)
-            {   
+            {
                 //si esa casilla destino esta vacia, si hay un movimiento simple disponible
-                if (tablero [nuevaFila, nuevaColumna] == 0)
+                if (tablero[nuevaFila, nuevaColumna] == 0)
                 {
                     return true; // encontro al menos una casilla vacia donde moverse
                 }
@@ -618,7 +630,7 @@ bool fichaPuedeMoverse (int[,] tablero, int fila, int columna, int turnoActual)
 }
 
 //Detectar si el jugador esta acorralado
-bool jugadorEstaAcorralado (int[,] tablero, int turnoActual)
+bool jugadorEstaAcorralado(int[,] tablero, int turnoActual)
 {
     //recorremos todas las casillas una por una
     for (int fila = 0; fila < 8; fila++)
@@ -637,7 +649,7 @@ bool jugadorEstaAcorralado (int[,] tablero, int turnoActual)
             }
 
             //si la ficha si puede comer o moverse simple el jugador si tiene una opcion disponible, no esta acorralado
-            if (FichaPuedeComer(tablero, fila, columna, turnoActual) || fichaPuedeMoverse (tablero, fila, columna, turnoActual))
+            if (FichaPuedeComer(tablero, fila, columna, turnoActual) || fichaPuedeMoverse(tablero, fila, columna, turnoActual))
 
             {
                 return false; // se encontro al menos una ficha con movimiento posible
@@ -679,7 +691,7 @@ int pedirNumero(string mensaje)
 }
 
 //pedimos una tecla que sea valida
-string pedirTecla (string mensaje, params string[] opcionesValidas)
+string pedirTecla(string mensaje, params string[] opcionesValidas)
 {
     string entrada;
     bool esValida = false;
@@ -687,7 +699,7 @@ string pedirTecla (string mensaje, params string[] opcionesValidas)
     do
     {
         Console.Write(mensaje);
-        entrada = Console.ReadLine()!.Trim().ToUpper(); 
+        entrada = Console.ReadLine()!.Trim().ToUpper();
         //.Trim() quita espacios de sobra que el usuario haya escrito sin querer
         //.ToUpper convierte lo que este escrito a letras mayusculas
 
@@ -734,12 +746,12 @@ string limpiarNombreArchivo(string nombreEscrito)
 }
 
 //bloque de cargar partida
-bool CargarPartida (string rutaPartida, int[,] tablero, ref int turnoActual, ref bool debeSeguirComiendo, ref int filaOrigen, ref int columnaOrigen)
+bool CargarPartida(string rutaPartida, int[,] tablero, ref int turnoActual, ref bool debeSeguirComiendo, ref int filaOrigen, ref int columnaOrigen)
 {
     try //intenta leer y convertir los datos
     {
         string[] lineas = File.ReadAllLines(rutaPartida); //lee todas las lineas del archivo y las guarda en un arreglo
-        
+
         if (lineas.Length != 11)// verifica que existan 3 lineas de datos generales y 8 filas de tablero
         {
             return false;// detenemos la carga si el formato del archivo no coincide
@@ -753,7 +765,7 @@ bool CargarPartida (string rutaPartida, int[,] tablero, ref int turnoActual, ref
         }
 
         bool cadenaEsValida = bool.TryParse(lineas[1], out bool cadenaLeida);//convierte la segunda linea en true o false
-        
+
         if (!cadenaEsValida)//revisamos que la segunda linea sea un booleano
         {
             return false;//el archivo no tiene el formato esperado
@@ -801,7 +813,7 @@ bool CargarPartida (string rutaPartida, int[,] tablero, ref int turnoActual, ref
 
                 tableroLeido[fila, columna] = valorCasilla; // Guarda el valor validado en el tablero temporal.
             }
-        
+
         }
 
         turnoActual = turnoLeido; //recuperamos el turno que estaba guardado
@@ -824,7 +836,7 @@ bool CargarPartida (string rutaPartida, int[,] tablero, ref int turnoActual, ref
         return false; //informa que no se pudo cargar la partida.
     }
 }
-        
+
 bool guardarPartida(string nombreArchivo, int[,] tablero, int turnoActual, bool debeSeguirComiendo, int filaOrigen, int columnaOrigen)
 {
     try //intenta crear la carpeta y escribir el archivo
