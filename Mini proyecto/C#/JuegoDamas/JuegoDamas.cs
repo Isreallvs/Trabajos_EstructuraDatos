@@ -68,6 +68,23 @@ while (juegoActivo) //While ya que no sabemos cuantos turnos va a durar una part
 
     //identificamos si la ficha es dama, para saber si hace falta preguntar adelante / atras, o si su direccion ya es fija
     int valorFichaseleccionada = tablero[filaOrigen, columnaOrigen];
+
+    //Validamos la ficha antes de pedir las direcciones del movimiento
+    if (valorFichaseleccionada == 0)
+    {
+        Console.WriteLine("No hay ninguna ficha en esa casilla.");
+        continue;
+    }
+
+    bool esFichaDelTurno = (turnoActual == 1 && (valorFichaseleccionada == 1 || valorFichaseleccionada == 3))
+        || (turnoActual == 2 && (valorFichaseleccionada == 2 || valorFichaseleccionada == 4));
+
+    if (!esFichaDelTurno)
+    {
+        Console.WriteLine("Esa ficha no es tuya, no puedes moverla en este turno.");
+        continue;
+    }
+
     bool esDamaSeleccionada = (valorFichaseleccionada == 3 || valorFichaseleccionada == 4);
 
     int filaDir; //guarda hacia que fila se va a mover (-1 o 1)
@@ -634,3 +651,45 @@ Console.WriteLine("1. Nueva partida");
 Console.WriteLine("2. Cargar partida guardada");
 Console.WriteLine("3. Salir");
 Console.WriteLine();
+
+//bloque del nombre del archivo
+string nombreArchivo = "";
+
+string opcionMenu = pedirTecla("", "1", "2", "3");
+
+if (opcionMenu == "3")
+{
+    Console.WriteLine("Has salido exitosamente.");
+    return; //termina el programa por completo
+}
+else if (opcionMenu == "1")
+{
+    Console.WriteLine("Cómo quieres nombrar esta partida? (ej: partida1): ");
+    string entradaNombre = Console.ReadLine()!;
+    nombreArchivo = limpiarNombreArchivo(entradaNombre);
+}
+else if (opcionMenu == "2")
+{
+    Console.Write("Qué partida quieres cargar?: ");
+    string entradaNombre = Console.ReadLine()!;
+    nombreArchivo = limpiarNombreArchivo(entradaNombre);
+}
+
+//bloque para limpiar el nombre del archivo
+string limpiarNombreArchivo(string nombreEscrito)
+{
+    //quitamos espacios de sobra ya sea al inicio o al final y convertimos el texto a minusculas para que sea tratado como el mismo archivo
+    string nombreLimpio = nombreEscrito.Trim().ToLower();
+
+    //reemplazamos espacios internos por guiones bajos para evitar nombres de archivos con espacios
+    nombreLimpio = nombreLimpio.Replace(" ", "_");
+
+    //si el usuario escribio ".txt" al final del nombre se lo quitamos primero
+    if (nombreLimpio.EndsWith(".txt"))
+    {
+        nombreLimpio = nombreLimpio.Substring(0, nombreLimpio.Length - 4);
+    }
+
+    //ahora le agregamos un ".txt" una sola vez para garantizar que se guarde bien
+    return nombreLimpio + ".txt";
+}
