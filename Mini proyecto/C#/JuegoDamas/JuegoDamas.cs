@@ -35,6 +35,51 @@ bool debeSeguirComiendo = false; //para saber si el mismo jugador debe seguir ju
 int filaOrigen = 0;
 int columnaOrigen = 0;
 
+//bloque del nombre del archivo
+string nombreArchivo = "";
+
+string opcionMenu = pedirTecla("", "1", "2", "3");
+
+if (opcionMenu == "3")
+{
+    Console.WriteLine("Has salido exitosamente.");
+    return; //termina el programa por completo
+}
+else if (opcionMenu == "1")
+{
+    Console.WriteLine("Cómo quieres nombrar esta partida? (ej: partida1): ");
+    string entradaNombre = Console.ReadLine()!;
+    nombreArchivo = limpiarNombreArchivo(entradaNombre);
+}
+else if (opcionMenu == "2")
+{
+    Console.Write("Qué partida quieres cargar?: ");
+    string entradaNombre = Console.ReadLine()!;
+    nombreArchivo = limpiarNombreArchivo(entradaNombre);
+
+    string carpetaPartidas = "Partidas"; //definimos la carpeta donde se guardaran las partidas
+    Directory.CreateDirectory(carpetaPartidas);//creamos la carpeta
+
+    string rutaPartida = Path.Combine(carpetaPartidas, nombreArchivo); //une carpeta y archivo en una ruta valida
+
+    if (!File.Exists(rutaPartida)) //revisa si realmente existe el archivo que pidio el jugador
+    {
+        Console.WriteLine("No se encontro esa partida guardada."); 
+        return; 
+    }
+
+    bool seCargoCorrectamente = CargarPartida (rutaPartida, tablero, ref turnoActual, ref debeSeguirComiendo, ref filaOrigen, ref columnaOrigen);
+
+    //revisa si el archivo tenia datos dañados o un formato incorrecto
+    if (!seCargoCorrectamente)
+    {
+        Console.WriteLine("La partida existe, pero sus datos no son validos.");
+        return;
+    }
+
+    Console.WriteLine("Partida cargada con exito.");// confirma que todo salio bien
+}
+
 while (juegoActivo) //While ya que no sabemos cuantos turnos va a durar una partida
 {
     DibujarTablero(tablero); //mostramos el tablero actual en cada turno
@@ -652,50 +697,7 @@ Console.WriteLine("2. Cargar partida guardada");
 Console.WriteLine("3. Salir");
 Console.WriteLine();
 
-//bloque del nombre del archivo
-string nombreArchivo = "";
 
-string opcionMenu = pedirTecla("", "1", "2", "3");
-
-if (opcionMenu == "3")
-{
-    Console.WriteLine("Has salido exitosamente.");
-    return; //termina el programa por completo
-}
-else if (opcionMenu == "1")
-{
-    Console.WriteLine("Cómo quieres nombrar esta partida? (ej: partida1): ");
-    string entradaNombre = Console.ReadLine()!;
-    nombreArchivo = limpiarNombreArchivo(entradaNombre);
-}
-else if (opcionMenu == "2")
-{
-    Console.Write("Qué partida quieres cargar?: ");
-    string entradaNombre = Console.ReadLine()!;
-    nombreArchivo = limpiarNombreArchivo(entradaNombre);
-
-    string carpetaPartidas = "Partidas"; //definimos la carpeta donde se guardaran las partidas
-    Directory.CreateDirectory(carpetaPartidas);//creamos la carpeta
-
-    string rutaPartida = Path.Combine(carpetaPartidas, nombreArchivo); //une carpeta y archivo en una ruta valida
-
-    if (!File.Exists(rutaPartida)) //revisa si realmente existe el archivo que pidio el jugador
-    {
-        Console.WriteLine("No se encontro esa partida guardada."); 
-        return; 
-    }
-
-    bool seCargoCorrectamente = CargarPartida (rutaPartida, tablero, ref turnoActual, ref debeSeguirComiendo, ref filaOrigen, ref columnaOrigen);
-
-    //revisa si el archivo tenia datos dañados o un formato incorrecto
-    if (!seCargoCorrectamente)
-    {
-        Console.WriteLine("La partida existe, pero sus datos no son validos.");
-        return;
-    }
-
-    Console.WriteLine("Partida cargada con exito.");// confirma que todo salio bien
-}
 
 //bloque para limpiar el nombre del archivo
 string limpiarNombreArchivo(string nombreEscrito)
