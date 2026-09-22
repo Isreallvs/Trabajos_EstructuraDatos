@@ -75,7 +75,7 @@ else if (opcionMenu == "2")
 
     if (!File.Exists(rutaPartida)) //revisa si realmente existe el archivo que pidio el jugador
     {
-        Console.WriteLine("No se encontro esa partida guardada (no uses espacios).");
+        Console.WriteLine("No se encontro esa partida guardada.");
         return;
     }
 
