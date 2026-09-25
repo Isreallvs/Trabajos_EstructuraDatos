@@ -162,187 +162,273 @@ while (!iniciarJuego)
 
 while (juegoActivo) //While ya que no sabemos cuantos turnos va a durar una partida
 {
+    // Si se cargó una captura encadenada, obliga a seguir con esa ficha.
+    if (debeSeguirComiendo && !fichaSeleccionada)
+    {
+        fichaSeleccionada = true;
+        filaSeleccionada = filaOrigen;
+        columnaSeleccionada = columnaOrigen;
+        cursorFila = filaOrigen;
+        cursorColumna = columnaOrigen;
+
+        destinosPosibles = ObtenerDestinosPosibles(tablero, filaSeleccionada, columnaSeleccionada, turnoActual);
+    }
+
+    // Calcula cuánto tiempo le queda al jugador actual.
+    TimeSpan tiempoDelJugador = turnoActual == 1 ? tiempoClaras : tiempoOscuras;
+
+    TimeSpan tiempoRestante = tiempoDelJugador - relojTurno.Elapsed;
+
+    // Si el reloj actual llegó a cero, ese jugador pierde.
+    if (tiempoRestante <= TimeSpan.Zero)
+    {
+        Console.Clear();
+        DibujarTablero(tablero);
+
+        string ganadorPorTiempo = turnoActual == 1 ? "Oscuras" : "Claras";
+
+        Console.WriteLine($"Se acabó el tiempo de las {((turnoActual == 1) ? "Claras" : "Oscuras")}.");
+        Console.WriteLine($"Las {ganadorPorTiempo} ganan por tiempo.");
+
+        juegoActivo = false;
+        continue;
+    }
+
+    // Muestra los tiempos reales: el del jugador actual sigue bajando.
+    TimeSpan tiempoClarasMostrado = turnoActual == 1 ? tiempoClaras - relojTurno.Elapsed : tiempoClaras;
+
+    TimeSpan tiempoOscurasMostrado = turnoActual == 2 ? tiempoOscuras - relojTurno.Elapsed : tiempoOscuras;
+
     Console.Clear();
 
-    DibujarTablero(tablero); //mostramos el tablero actual en cada turno
+    DibujarTableroConCursor(tablero, cursorFila, cursorColumna, fichaSeleccionada, filaSeleccionada, columnaSeleccionada, destinosPosibles);
 
-    String colorTurno = (turnoActual == 1) ? "Claras" : "Oscuras";
-    Console.WriteLine($"Turno del jugador: {colorTurno}");
+    string colorTurno = turnoActual == 1 ? "Claras" : "Oscuras";
 
-    //solo preguntamos el origen si no venimos de captura en cadena
-    if (!debeSeguirComiendo)
+    Console.WriteLine();
+    Console.WriteLine($"Turno: {colorTurno}");
+    Console.WriteLine($"Tiempo Claras: {FormatearTiempo(tiempoClarasMostrado)}" + $" | Tiempo Oscuras: {FormatearTiempo(tiempoOscurasMostrado)}");
+
+    Console.WriteLine("Flechas: mover cursor | Enter: seleccionar/mover");
+    Console.WriteLine("Escape: cancelar selección | R: rendirse");
+
+    if (fichaSeleccionada)
     {
-        Console.WriteLine("Qué ficha quieres mover?");
-
-
-        filaOrigen = pedirNumero("Fila origen: ");
-
-
-        columnaOrigen = pedirNumero("Columna origen: ");
-
-    }
-    else
-    {
-        //si si debe seguir comiendo le avisamos con que ficha sigue jugando
-        Console.WriteLine($"Sigues comiendo con la ficha en ({filaOrigen}, {columnaOrigen})");
+        Console.WriteLine("Ficha seleccionada: elige una casilla amarilla.");
     }
 
-    if (filaOrigen < 0 || filaOrigen > 7 || columnaOrigen < 0 || columnaOrigen > 7)
+    if (!string.IsNullOrWhiteSpace(mensajeEstado))
     {
-        Console.WriteLine("Esa coordenada de origen no existe en el tablero.");
-        System.Threading.Thread.Sleep(2000);
-        continue; //reinicia el turno desde el principio
+        Console.WriteLine(mensajeEstado);
     }
 
-    //identificamos si la ficha es dama, para saber si hace falta preguntar adelante / atras, o si su direccion ya es fija
-    int valorFichaseleccionada = tablero[filaOrigen, columnaOrigen];
+    // Espera una tecla o detecta que se terminó el tiempo.
+    ConsoleKeyInfo? teclaLeida = EsperarTeclaConTiempo(relojTurno, tiempoDelJugador);
 
-    //Validamos la ficha antes de pedir las direcciones del movimiento
-    if (valorFichaseleccionada == 0)
+    if (teclaLeida == null)
     {
-        Console.WriteLine("No hay ninguna ficha en esa casilla.");
-        System.Threading.Thread.Sleep(2000);
-        continue;
+        continue; // La siguiente vuelta detectará el tiempo agotado.
     }
 
-    bool esFichaDelTurno = (turnoActual == 1 && (valorFichaseleccionada == 1 || valorFichaseleccionada == 3))
-        || (turnoActual == 2 && (valorFichaseleccionada == 2 || valorFichaseleccionada == 4));
+    ConsoleKey tecla = teclaLeida.Value.Key;
+    mensajeEstado = "";
 
-    if (!esFichaDelTurno)
+    // Mueve el cursor sin salir del tablero.
+    if (tecla == ConsoleKey.UpArrow)
     {
-        Console.WriteLine("Esa ficha no es tuya, no puedes moverla en este turno.");
-        System.Threading.Thread.Sleep(2000);
-        continue;
+        cursorFila = Math.Max(0, cursorFila - 1);
+    }
+    else if (tecla == ConsoleKey.DownArrow)
+    {
+        cursorFila = Math.Min(7, cursorFila + 1);
+    }
+    else if (tecla == ConsoleKey.LeftArrow)
+    {
+        cursorColumna = Math.Max(0, cursorColumna - 1);
+    }
+    else if (tecla == ConsoleKey.RightArrow)
+    {
+        cursorColumna = Math.Min(7, cursorColumna + 1);
     }
 
-    bool esDamaSeleccionada = (valorFichaseleccionada == 3 || valorFichaseleccionada == 4);
-
-    int filaDir; //guarda hacia que fila se va a mover (-1 o 1)
-
-    if (esDamaSeleccionada)
+    // R permite rendirse en cualquier momento.
+    else if (tecla == ConsoleKey.R)
     {
-        //si es dama preguntamos si quiere ir adelante o atras
-        string teclaFila = pedirTecla("Deseas mover adelante o atras? (A = Adelante, T = Atras): ", "A", "T");
+        string ganadorPorRendicion = turnoActual == 1 ? "Oscuras" : "Claras";
 
+        Console.Clear();
+        DibujarTablero(tablero);
 
-        int direccionPropia = (turnoActual == 1) ? 1 : -1; //la direccion natural de este jugador (+1 claras, -1 oscuras)
+        Console.WriteLine($"Las {colorTurno} se rindieron.");
+        Console.WriteLine($"Las {ganadorPorRendicion} ganan la partida.");
 
-        //si elige adelante usamos su direccion natural, si elige atras usamos la direccion contraria
-        filaDir = (teclaFila == "A") ? direccionPropia : -direccionPropia;
-    }
-    else
-    {
-        //si es ficha normal su direccion siempre es la misma
-        filaDir = (turnoActual == 1) ? 1 : -1;
+        juegoActivo = false;
     }
 
-    //preguntamos si quiere moverse a izquierda o derecg¿ha
-    string teclaColumna = pedirTecla("Hacía donde? (I = Izquierda, D = Derecha): ", "I", "D");
-    int colDir = (teclaColumna == "I") ? -1 : 1; //si escribe "I" la direccion de columna es -1 (izq), cualquier otra cosa se asume que es D la dejamos en +1 (der)
-
-    //Calculamos el destino automaticamente, segun el origen y direccion elegida
-
-    //Revisamos si en esa diagonal especifica hay una captura disponible (salto de 2)
-    int filaCaptura = filaOrigen + (filaDir * 2);
-    int columnaCaptura = columnaOrigen + (colDir * 2);
-
-    bool hayCapturaEnEstaDiagonal = false;
-    if (filaCaptura >= 0 && filaCaptura <= 7 && columnaCaptura >= 0 && columnaCaptura <= 7)
+    // Escape cancela la selección, excepto durante una captura encadenada.
+    else if (tecla == ConsoleKey.Escape)
     {
-        int filaIntermedia = (filaOrigen + filaCaptura) / 2;
-        int columnaIntermedia = (columnaOrigen + columnaCaptura) / 2;
-        int valorIntermedio = tablero[filaIntermedia, columnaIntermedia];
-
-        bool esRivalAqui = (turnoActual == 1 && (valorIntermedio == 2 || valorIntermedio == 4)) || (turnoActual == 2 && (valorIntermedio == 1 || valorIntermedio == 3));
-
-        if (esRivalAqui && tablero[filaCaptura, columnaCaptura] == 0)
+        if (debeSeguirComiendo)
         {
-            hayCapturaEnEstaDiagonal = true;
+            mensajeEstado = "Debes terminar la captura encadenada.";
+        }
+        else if (fichaSeleccionada)
+        {
+            fichaSeleccionada = false;
+            filaSeleccionada = -1;
+            columnaSeleccionada = -1;
+            destinosPosibles.Clear();
+
+            mensajeEstado = "Selección cancelada.";
         }
     }
 
-    int filaDestino;
-    int columnaDestino;
-
-    if (hayCapturaEnEstaDiagonal)
+    // Enter selecciona una ficha o ejecuta el destino resaltado.
+    else if (tecla == ConsoleKey.Enter)
     {
-        //si hay captura en esa diagonal la usamos
-        filaDestino = filaCaptura;
-        columnaDestino = columnaCaptura;
-    }
-    else
-    {
-        //si no hay captura probamos movimiento simple (1 casilla)
-        filaDestino = filaOrigen + filaDir;
-        columnaDestino = columnaOrigen + colDir;
-    }
-
-
-    bool movimientoExitoso = IntentarMover(tablero, filaOrigen, columnaOrigen, filaDestino, columnaDestino, turnoActual); // Probamos el radar con una ficha especifica
-
-    if (movimientoExitoso)
-    {
-        if (!debeSeguirComiendo)
+        if (!fichaSeleccionada)
         {
-            turnoActual = (turnoActual == 1) ? 2 : 1; // Nos dice si el turno actual era 1, ahora pasa a ser 2, sino pasa a ser 1
-        }
-        else
-        {
-            //si debe seguir comiendo el origen del proximo turno es el destino de este
-            filaOrigen = filaDestino;
-            columnaOrigen = columnaDestino;
-        }
+            int valorCursor = tablero[cursorFila, cursorColumna];
 
-        //revisar si alguien se quedo sin fichas
-        int fichasClaras = contarFichas(tablero, 1);
-        int fichasOscuras = contarFichas(tablero, 2);
+            bool esFichaDelTurno = (turnoActual == 1 && (valorCursor == 1 || valorCursor == 3)) || (turnoActual == 2 && (valorCursor == 2 || valorCursor == 4));
 
-        if (fichasClaras == 0)
-        {
-            DibujarTablero(tablero); //mostramos el tablero final
-            Console.WriteLine("Las Oscuras ganan. Ya no hay mas fichas claras.");
-            juegoActivo = false; //detenemos el while
-        }
-        else if (fichasOscuras == 0)
-        {
-            DibujarTablero(tablero);
-            Console.WriteLine("Las Claras ganan. Ya no hay mas fichas oscuras.");
-            juegoActivo = false;
-        }
-
-        //revisar si el jugar que sigue esta acorralado
-        else if (jugadorEstaAcorralado(tablero, turnoActual))
-        {
-            DibujarTablero(tablero);
-            string ganador = (turnoActual == 1) ? "Oscuras" : "Claras"; //gana el que no esta acorralado
-            Console.WriteLine($"Las {ganador} ganan. El otro jugador quedo acorralado/sin movimientos posibles.");
-            juegoActivo = false;
-        }
-
-        if (juegoActivo)
-        {
-            bool seGuardoCorrectamente = guardarPartida(nombreArchivo, tablero, turnoActual, debeSeguirComiendo, filaOrigen, columnaOrigen);
-
-            if (seGuardoCorrectamente)
+            if (!esFichaDelTurno)
             {
-                Console.WriteLine("Partida guardada exitosamente.");
+                mensajeEstado = "Selecciona una ficha de tu color.";
             }
             else
             {
-                Console.WriteLine("No se pudo guardar la partida.");
-            }
+                List<(int fila, int columna)> destinos = ObtenerDestinosPosibles(tablero, cursorFila, cursorColumna, turnoActual);
 
-            System.Threading.Thread.Sleep(2000);//esperamos un segundo antes de limpiar y mostrar el siguiente tablero
+                if (destinos.Count == 0)
+                {
+                    if (capturaDisponible(tablero, turnoActual))
+                    {
+                        mensajeEstado = "Debes seleccionar una ficha que pueda comer.";
+                    }
+                    else
+                    {
+                        mensajeEstado = "Esa ficha no tiene movimientos disponibles.";
+                    }
+                }
+                else
+                {
+                    fichaSeleccionada = true;
+                    filaSeleccionada = cursorFila;
+                    columnaSeleccionada = cursorColumna;
+                    destinosPosibles = destinos;
+
+                    mensajeEstado = "Ficha seleccionada.";
+                }
+            }
+        }
+        else
+        {
+            bool cursorEsDestino = destinosPosibles.Contains((cursorFila, cursorColumna));
+
+            if (!cursorEsDestino)
+            {
+                mensajeEstado = "Selecciona una casilla amarilla o presiona Escape.";
+            }
+            else
+            {
+                int valorAntesDeMover = tablero[filaSeleccionada, columnaSeleccionada];
+
+                bool fueCaptura = Math.Abs(cursorFila - filaSeleccionada) == 2;
+
+                bool movimientoExitoso = IntentarMover(tablero, filaSeleccionada, columnaSeleccionada, cursorFila, cursorColumna, turnoActual);
+
+                if (movimientoExitoso)
+                {
+                    bool seCorono = (valorAntesDeMover == 1 && tablero[cursorFila, cursorColumna] == 3) || (valorAntesDeMover == 2 && tablero[cursorFila, cursorColumna] == 4);
+
+                    string mensajeMovimiento = fueCaptura ? "Comiste una ficha rival." : "Movimiento realizado.";
+
+                    if (seCorono)
+                    {
+                        mensajeMovimiento += " La ficha se coronó a Dama.";
+                    }
+
+                    if (debeSeguirComiendo)
+                    {
+                        // Mantiene la selección para que termine la captura encadenada.
+                        filaOrigen = cursorFila;
+                        columnaOrigen = cursorColumna;
+
+                        filaSeleccionada = cursorFila;
+                        columnaSeleccionada = cursorColumna;
+
+                        destinosPosibles = ObtenerDestinosPosibles(tablero, filaSeleccionada, columnaSeleccionada, turnoActual);
+
+                        mensajeEstado = mensajeMovimiento + " Debes seguir comiendo con la misma ficha.";
+                    }
+                    else
+                    {
+                        // El turno termina: descuenta el tiempo usado y pasa al rival.
+                        if (turnoActual == 1)
+                        {
+                            tiempoClaras -= relojTurno.Elapsed;
+                        }
+                        else
+                        {
+                            tiempoOscuras -= relojTurno.Elapsed;
+                        }
+
+                        turnoActual = turnoActual == 1 ? 2 : 1;
+                        relojTurno.Restart();
+
+                        fichaSeleccionada = false;
+                        filaSeleccionada = -1;
+                        columnaSeleccionada = -1;
+                        destinosPosibles.Clear();
+
+                        mensajeEstado = mensajeMovimiento;
+                    }
+
+                    // Guarda tras cada movimiento válido.
+                    bool seGuardoCorrectamente = guardarPartida(nombreArchivo, tablero, turnoActual, debeSeguirComiendo, filaOrigen, columnaOrigen);
+
+                    if (!seGuardoCorrectamente)
+                    {
+                        mensajeEstado += " No se pudo guardar la partida.";
+                    }
+
+                    // Comprueba si alguien ya perdió por no tener fichas o movimientos.
+                    int fichasClaras = contarFichas(tablero, 1);
+                    int fichasOscuras = contarFichas(tablero, 2);
+
+                    if (fichasClaras == 0 || fichasOscuras == 0)
+                    {
+                        string ganador = fichasClaras == 0 ? "Oscuras" : "Claras";
+
+                        Console.Clear();
+                        DibujarTablero(tablero);
+                        Console.WriteLine($"Las {ganador} ganan. El rival no tiene fichas.");
+
+                        juegoActivo = false;
+                    }
+                    else if (!debeSeguirComiendo
+                        && jugadorEstaAcorralado(tablero, turnoActual))
+                    {
+                        string ganador = turnoActual == 1 ? "Oscuras" : "Claras";
+
+                        Console.Clear();
+                        DibujarTablero(tablero);
+                        Console.WriteLine($"Las {ganador} ganan. El rival no tiene movimientos.");
+
+                        juegoActivo = false;
+                    }
+                }
+                else
+                {
+                    mensajeEstado = "Ese movimiento no es válido.";
+                }
+            }
         }
     }
-    if (!movimientoExitoso)
-    {
-        System.Threading.Thread.Sleep(2000);
-    }
+
 
 }
-
-
 
 //Funciones Visuales ("interfaz")
 void DibujarTablero(int[,] tablero)
@@ -1098,7 +1184,7 @@ string FormatearTiempo(TimeSpan tiempo) //convierte timespan a texto mm:ss
 
     return $"{minutos:00}:{segundos:00}";
 }
-ConsoleKeyInfo? EsperarTeclarConTiempo(Stopwatch relojTurno, TimeSpan tiempoRestante)
+ConsoleKeyInfo? EsperarTeclaConTiempo(Stopwatch relojTurno, TimeSpan tiempoRestante)
 {
     while (!Console.KeyAvailable)//se repite mientras el jugador no presione una tecla
     {
