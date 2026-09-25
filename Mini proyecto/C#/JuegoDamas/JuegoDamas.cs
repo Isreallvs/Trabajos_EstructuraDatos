@@ -36,6 +36,19 @@ bool debeSeguirComiendo = false; //para saber si el mismo jugador debe seguir ju
 int filaOrigen = 0;
 int columnaOrigen = 0;
 
+TimeSpan tiempoClaras = TimeSpan.FromMinutes(2); //tiempo restante de claras
+TimeSpan tiempoOscuras = TimeSpan.FromMinutes(2);
+Stopwatch relojTurno = Stopwatch.StartNew(); //mide unicamente el tiempo del jugador que esta jugando
+
+int cursorFila = 0;//filla donde inicia el cursor
+int cursorColumna = 0; //columna donde inicia el cursor
+bool fichaSeleccionada = false; //indica si el jugador ya escogio una ficha
+int filaSeleccionada = -1; //guarda la fila de la ficha seleccionada
+int columnaSeleccionada = -1; //guarda la columna de la ficha seleccionada
+
+List <(int fila, int columna)> destinosPosibles = new();//guardara las casillas validas iluminadas
+
+string mensajeEstado = "";//mostrara avisos debajo del tablero
 
 // Bloque de menu inicial 
 const string carpetaPartidas = "Partidas";//define la carpeta unica de guardados
