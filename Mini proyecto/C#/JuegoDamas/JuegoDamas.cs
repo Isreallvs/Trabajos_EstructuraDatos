@@ -1,5 +1,6 @@
 ﻿using System.Data;
 using System.Runtime.InteropServices;
+using System.Diagnostics;
 Console.OutputEncoding = System.Text.Encoding.UTF8;
 
 //Configuracion inicial del tablero
@@ -37,59 +38,114 @@ int columnaOrigen = 0;
 
 
 // Bloque de menu inicial 
-Console.WriteLine("--- Bienvenido al juego Damas Inglesas ---");
-Console.WriteLine("¿Qué deseas hacer?");
-Console.WriteLine();
-Console.WriteLine("1. Nueva partida");
-Console.WriteLine("2. Cargar partida guardada");
-Console.WriteLine("3. Salir");
-Console.WriteLine();
+const string carpetaPartidas = "Partidas";//define la carpeta unica de guardados
+Directory.CreateDirectory(carpetaPartidas);//la crea solo si aun no existe
+
+string nombreArchivo = "";
+bool iniciarJuego = false; 
+
+while (!iniciarJuego)
+{
+    Console.WriteLine("--- Bienvenido al juego Damas Inglesas ---");
+    Console.WriteLine("¿Qué deseas hacer?");
+    Console.WriteLine();
+    Console.WriteLine("1. Nueva partida");
+    Console.WriteLine("2. Cargar partida guardada");
+    Console.WriteLine("3. Historial de partidas guardadas");
+    Console.WriteLine("4. Salir");
+    Console.WriteLine();
 
 
 //bloque del nombre del archivo
-string nombreArchivo = "";
 
-string opcionMenu = pedirTecla("Elige una opcion (1, 2 o 3): ", "1", "2", "3");
 
-if (opcionMenu == "3")
-{
-    Console.WriteLine("Has salido exitosamente.");
-    return; //termina el programa por completo
-}
-else if (opcionMenu == "1")
-{
-    Console.WriteLine("Cómo quieres nombrar esta partida? (ej: partida1): ");
-    string entradaNombre = Console.ReadLine()!;
-    nombreArchivo = limpiarNombreArchivo(entradaNombre);
-}
-else if (opcionMenu == "2")
-{
-    Console.Write("Qué partida quieres cargar?: ");
-    string entradaNombre = Console.ReadLine()!;
-    nombreArchivo = limpiarNombreArchivo(entradaNombre);
+    string opcionMenu = pedirTecla("Elige una opcion (1, 2, 3 o 4): ", "1", "2", "3", "4");
 
-    string carpetaPartidas = "Partidas"; //definimos la carpeta donde se guardaran las partidas
-    Directory.CreateDirectory(carpetaPartidas);//creamos la carpeta
-
-    string rutaPartida = Path.Combine(carpetaPartidas, nombreArchivo); //une carpeta y archivo en una ruta valida
-
-    if (!File.Exists(rutaPartida)) //revisa si realmente existe el archivo que pidio el jugador
+    if (opcionMenu == "1")//crea una partida nueva sin sobrescribir otra
     {
-        Console.WriteLine("No se encontro esa partida guardada.");
-        return;
+        bool nombreDisponible = false;//controla que se pida otro nombre si ya existe 
+
+        while (!nombreDisponible)
+        {
+            Console.WriteLine("Cómo quieres nombrar esta partida? (ej: partida1): ");
+            string entradaNombre = Console.ReadLine()!;
+            nombreArchivo = limpiarNombreArchivo(entradaNombre);
+
+            string rutaNuevaPartida = Path.Combine(carpetaPartidas, nombreArchivo);
+            nombreDisponible = !File.Exists(rutaNuevaPartida);//sera true solo si no existe el archivo
+
+            if (!nombreDisponible)
+            {
+                Console.WriteLine("Ya existe una partida con ese nombre. Escribe otro nombre.");
+            }
+        }
+
+        //Guarda el tablero inicial para reservar el nombre desde este momento
+        bool seCreoCorrectamente = guardarPartida (nombreArchivo, tablero, turnoActual, debeSeguirComiendo, filaOrigen, columnaOrigen);
+
+        if (seCreoCorrectamente)
+        {
+            iniciarJuego = true; //sale del menu e inicia la partida nueva
+        }
+        else
+        {
+            Console.WriteLine("No se pudo crear el archivo de la nueva partida.");
+            Console.WriteLine("Presiona una tecla para volver al menú.");
+            Console.ReadKey(true);
+        }
+        
     }
 
-    bool seCargoCorrectamente = CargarPartida(rutaPartida, tablero, ref turnoActual, ref debeSeguirComiendo, ref filaOrigen, ref columnaOrigen);
-
-    //revisa si el archivo tenia datos dañados o un formato incorrecto
-    if (!seCargoCorrectamente)
+    else if (opcionMenu == "2")//carga una partida existente
     {
-        Console.WriteLine("La partida existe, pero sus datos no son validos.");
+        Console.Write("Qué partida quieres cargar?: ");
+        string entradaNombre = Console.ReadLine()!;
+        nombreArchivo = limpiarNombreArchivo(entradaNombre);
+
+
+        string rutaPartida = Path.Combine(carpetaPartidas, nombreArchivo); //une carpeta y archivo en una ruta valida
+
+        if (!File.Exists(rutaPartida)) //revisa si realmente existe el archivo que pidio el jugador
+        {
+            Console.WriteLine("No se encontro esa partida guardada.");
+            Console.WriteLine("Presiona una tecla para volver al menú.");
+            Console.ReadKey(true);
+        }
+        else
+        {
+            bool seCargoCorrectamente = CargarPartida(rutaPartida, tablero, ref turnoActual, ref debeSeguirComiendo, ref filaOrigen, ref columnaOrigen);
+
+            //revisa si el archivo tenia datos dañados o un formato incorrecto
+            if (seCargoCorrectamente)
+            {
+                iniciarJuego = true;//sale del menu e inicia la partida cargada
+            }
+            else
+            {
+                Console.WriteLine("La partida existe, pero sus datos no son válidos.");
+                Console.WriteLine("Presiona una tecla para volver al menú.");
+                Console.ReadKey(true);
+            }
+        }
+    }
+    
+    else if (opcionMenu == "3")
+    {
+        Console.Clear();
+        MostrarHistorial(carpetaPartidas);
+
+        Console.WriteLine();
+        Console.WriteLine("Presiona una tecla para volver al menú.");
+        Console.ReadKey(true);
+
+    }
+    else //opcion 4
+    {
+        Console.WriteLine("Has salido exitosamente. ");
         return;
     }
-
-    Console.WriteLine("Partida cargada con exito.");// confirma que todo salio bien
 }
+
 
 while (juegoActivo) //While ya que no sabemos cuantos turnos va a durar una partida
 {
@@ -871,5 +927,33 @@ bool guardarPartida(string nombreArchivo, int[,] tablero, int turnoActual, bool 
     catch //atrapa errores que no permiten guardar la partida
     {
         return false;
+    }
+}
+
+
+void MostrarHistorial(string carpetaPartidas) //muestra todas las partidas guardadas dentro de la carpeta
+{
+    string[] rutasPartidas = Directory.GetFiles(carpetaPartidas, "*.txt"); //busca todos los archivos que terminen en .txt
+    if (rutasPartidas.Length == 0)//revisa si no se encontro una partida
+    {
+        Console.WriteLine("Todavia no hay partidas guardadas. ");
+        return;
+    }
+
+    Array.Sort( rutasPartidas, (ruta1, ruta2) => File.GetLastWriteTime(ruta2) .CompareTo(File.GetLastWriteTime(ruta1)));//ordena de la mas reciente a la mas antigua
+
+    Console.WriteLine ("--- Historial de Partidas ---");
+    Console.WriteLine();
+
+    for (int indice = 0; indice < rutasPartidas.Length; indice++) // Recorre cada archivo encontrado.
+    {
+        string rutaPartida = rutasPartidas[indice]; // Guarda la ruta de la partida actual.
+
+        string nombrePartida = Path.GetFileNameWithoutExtension(rutaPartida); // Obtiene el nombre sin .txt.
+
+        DateTime fechaGuardado = File.GetLastWriteTime(rutaPartida); // Obtiene la fecha del último guardado.
+
+        Console.WriteLine(
+            $"{indice + 1}. {nombrePartida} - {fechaGuardado:dd/MM/yyyy HH:mm}"); // Muestra número, nombre y fecha.
     }
 }
