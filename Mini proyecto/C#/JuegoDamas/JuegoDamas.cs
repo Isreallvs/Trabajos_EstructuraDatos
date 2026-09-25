@@ -347,18 +347,48 @@ while (juegoActivo) //While ya que no sabemos cuantos turnos va a durar una part
 //Funciones Visuales ("interfaz")
 void DibujarTablero(int[,] tablero)
 {
+    DibujarTableroConCursor( tablero, -1, -1, false, -1, -1, new List<(int fila, int columna)>());
+}
+
+void DibujarTableroConCursor(int[,] tablero, int cursorFila, int cursorColumna, bool fichaSeleccionada, int filaSeleccionada, int columnaSeleccionada, List<(int fila, int columna)> destinosPosibles)
+{
     Console.ForegroundColor = ConsoleColor.Gray; // color neutro para encabezados
+    Console.BackgroundColor = ConsoleColor.Black;// fondo normal
     Console.WriteLine("    0 1 2 3 4 5 6 7");
     Console.WriteLine("  +-----------------");
 
     for (int fila = 0; fila < 8; fila++)
     {
         Console.ForegroundColor = ConsoleColor.Gray; // número de fila en gris
+        Console.BackgroundColor = ConsoleColor.Black;
         Console.Write(fila + " | ");
 
         for (int columna = 0; columna < 8; columna++)
         {
             int valor = tablero[fila, columna];
+
+            bool esCursor = fila == cursorFila && columna == cursorColumna;
+            bool esSeleccionada = fichaSeleccionada && fila == filaSeleccionada && columna == columnaSeleccionada;
+
+            bool esDestinoPosible = destinosPosibles.Contains((fila, columna));
+
+            if (esSeleccionada) //La ficha elegida se resalta en verde
+            {
+                Console.BackgroundColor = ConsoleColor.DarkGreen;
+            }
+            else if (esDestinoPosible) // Los destinos posibles y legales se resaltan en amarillo.
+            {
+                Console.BackgroundColor = ConsoleColor.DarkYellow;
+            }
+            else if (esCursor) // El cursor actual se resalta en azul.
+            {
+                Console.BackgroundColor = ConsoleColor.DarkBlue;
+            }
+            else
+            {
+                Console.BackgroundColor = ConsoleColor.Black;
+            }
+
 
             char simbolo = '.';
 
@@ -388,16 +418,16 @@ void DibujarTablero(int[,] tablero)
             }
 
             Console.Write(simbolo + " ");
-        }
 
+            Console.BackgroundColor = ConsoleColor.Black;//evita que el color se pase a la casilla siguiente
+        }
         Console.ForegroundColor = ConsoleColor.Gray;
+        Console.BackgroundColor = ConsoleColor.Black;
         Console.WriteLine();
     }
 
-    Console.ForegroundColor = ConsoleColor.Gray;
+    Console.ResetColor();
 }
-
-
 //Logica del juego (Movimientos y reglas)
 bool IntentarMover(int[,] tablero, int filaOrigen, int columnaOrigen, int filaDestino, int columnaDestino, int turnoActual)
 {
@@ -626,6 +656,92 @@ bool FichaPuedeComer(int[,] tablero, int fila, int columna, int turnoActual)
     }
 
     return false;
+}
+List<(int fila, int columna)> ObtenerDestinosPosibles(int[,] tablero, int filaOrigen, int columnaOrigen, int turnoActual)
+{
+    List<(int fila, int columna)> destinos = new();//lista de distintos destino que se devolveran
+
+    int valorFicha = tablero[filaOrigen, columnaOrigen]; //lee la ficha seleccionada
+
+    bool esFichaDelTurno = (turnoActual == 1 && (valorFicha == 1 || valorFicha == 3)) || (turnoActual == 2 && (valorFicha == 2 || valorFicha == 4));
+
+    if (!esFichaDelTurno) //no permite calcula movimientos para una ficha rival o casilla vacia
+    {
+        return destinos;
+    }
+
+    bool esDama = valorFicha == 3 || valorFicha == 4;//identifica si puede moverse en ambos sentidos
+
+    int[] direccionesFila; //guarda las direcciones verticales permitidas
+
+    if (esDama)
+    {
+        direccionesFila = new int[] { 1, -1};//las damas pueden ir adelante y atras
+
+    }
+    else
+    {
+        int direccionNormal = turnoActual == 1 ? 1 : -1; // Dirección de una ficha normal.
+        direccionesFila = new int[] { direccionNormal };
+    }
+
+    int[] direccionesColumna = new int[] {-1, 1};//izquierda y derecha
+
+    bool hayCapturaObligatoria = capturaDisponible(tablero, turnoActual); // Revisa si el jugador está obligado a comer.
+
+    foreach (int direccionFila in direccionesFila) // Revisa cada dirección vertical válida.
+    {
+        foreach (int direccionColumna in direccionesColumna) // Revisa izquierda y derecha.
+        {
+            int filaDestino = filaOrigen + (direccionFila * 2); // Casilla donde caería después de una captura.
+            int columnaDestino = columnaOrigen + (direccionColumna * 2);
+
+            if (filaDestino < 0 || filaDestino > 7 || columnaDestino < 0 || columnaDestino > 7)
+            {
+                continue; // Salta destinos fuera del tablero.
+            }
+
+            int filaIntermedia = filaOrigen + direccionFila; // Casilla donde debería estar el rival.
+            int columnaIntermedia = columnaOrigen + direccionColumna;
+
+            int valorIntermedio = tablero[filaIntermedia, columnaIntermedia];
+
+            bool esRival =
+                (turnoActual == 1 && (valorIntermedio == 2 || valorIntermedio == 4))
+                || (turnoActual == 2 && (valorIntermedio == 1 || valorIntermedio == 3));
+
+            if (esRival && tablero[filaDestino, columnaDestino] == 0)
+            {
+                destinos.Add((filaDestino, columnaDestino)); // Agrega la captura válida.
+            }
+        }
+    }
+
+    if (hayCapturaObligatoria)//si alguien puede comer, solo se muestran capturas
+    {
+        return destinos;
+    }
+
+    foreach (int direccionFila in direccionesFila) // Revisa movimientos simples.
+    {
+        foreach (int direccionColumna in direccionesColumna)
+        {
+            int filaDestino = filaOrigen + direccionFila; // Destino de una casilla.
+            int columnaDestino = columnaOrigen + direccionColumna;
+
+            bool estaDentroDelTablero =
+                filaDestino >= 0 && filaDestino <= 7
+                && columnaDestino >= 0 && columnaDestino <= 7;
+
+            if (estaDentroDelTablero && tablero[filaDestino, columnaDestino] == 0)
+            {
+                destinos.Add((filaDestino, columnaDestino)); // Agrega el movimiento simple válido.
+            }
+        }
+    }
+
+    return destinos; //devuelve todas las casillas iluminables
+
 }
 
 int contarFichas(int[,] tablero, int jugador)
@@ -969,4 +1085,29 @@ void MostrarHistorial(string carpetaPartidas) //muestra todas las partidas guard
         Console.WriteLine(
             $"{indice + 1}. {nombrePartida} - {fechaGuardado:dd/MM/yyyy HH:mm}"); // Muestra número, nombre y fecha.
     }
+}
+string FormatearTiempo(TimeSpan tiempo) //convierte timespan a texto mm:ss
+{
+    if (tiempo < TimeSpan.Zero)//evita mostrar tiempos negativos
+    {
+        tiempo = TimeSpan.Zero;
+    }
+
+    int minutos = (int)tiempo.TotalMinutes;//obtiene los minutos completos
+    int segundos = tiempo.Seconds;//obtiene los segundos restantes
+
+    return $"{minutos:00}:{segundos:00}";
+}
+ConsoleKeyInfo? EsperarTeclarConTiempo(Stopwatch relojTurno, TimeSpan tiempoRestante)
+{
+    while (!Console.KeyAvailable)//se repite mientras el jugador no presione una tecla
+    {
+        if (relojTurno.Elapsed >= tiempoRestante) // Revisa si ya gastó todo su tiempo.
+        {
+            return null; // Informa que se acabó el tiempo.
+        }
+
+        System.Threading.Thread.Sleep(50);
+    }
+    return Console.ReadKey(true); 
 }
