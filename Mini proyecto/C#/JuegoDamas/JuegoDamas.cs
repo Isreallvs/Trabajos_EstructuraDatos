@@ -38,7 +38,7 @@ int columnaOrigen = 0;
 
 TimeSpan tiempoClaras = TimeSpan.FromMinutes(2); //tiempo restante de claras
 TimeSpan tiempoOscuras = TimeSpan.FromMinutes(2);
-Stopwatch relojTurno = Stopwatch.StartNew(); //mide unicamente el tiempo del jugador que esta jugando
+Stopwatch relojTurno = new Stopwatch(); //mide unicamente el tiempo del jugador que esta jugando
 
 int cursorFila = 0;//filla donde inicia el cursor
 int cursorColumna = 0; //columna donde inicia el cursor
@@ -94,7 +94,7 @@ while (!iniciarJuego)
         }
 
         //Guarda el tablero inicial para reservar el nombre desde este momento
-        bool seCreoCorrectamente = guardarPartida (nombreArchivo, tablero, turnoActual, debeSeguirComiendo, filaOrigen, columnaOrigen);
+        bool seCreoCorrectamente = guardarPartida (nombreArchivo, tablero, turnoActual, debeSeguirComiendo, filaOrigen, columnaOrigen, tiempoClaras, tiempoOscuras);
 
         if (seCreoCorrectamente)
         {
@@ -126,7 +126,7 @@ while (!iniciarJuego)
         }
         else
         {
-            bool seCargoCorrectamente = CargarPartida(rutaPartida, tablero, ref turnoActual, ref debeSeguirComiendo, ref filaOrigen, ref columnaOrigen);
+            bool seCargoCorrectamente = CargarPartida(rutaPartida, tablero, ref turnoActual, ref debeSeguirComiendo, ref filaOrigen, ref columnaOrigen, ref tiempoClaras, ref tiempoOscuras);
 
             //revisa si el archivo tenia datos dañados o un formato incorrecto
             if (seCargoCorrectamente)
@@ -159,6 +159,7 @@ while (!iniciarJuego)
     }
 }
 
+relojTurno.Start();//inicia el reloj del jugador que comienza la partida
 
 while (juegoActivo) //While ya que no sabemos cuantos turnos va a durar una partida
 {
@@ -385,8 +386,12 @@ while (juegoActivo) //While ya que no sabemos cuantos turnos va a durar una part
                         mensajeEstado = mensajeMovimiento;
                     }
 
+                    TimeSpan tiempoClarasParaGuardar = turnoActual == 1
+                    ? tiempoClaras - relojTurno.Elapsed : tiempoClaras; // Resta el tiempo del turno actual si son claras.
+                    TimeSpan tiempoOscurasParaGuardar = turnoActual == 2 ? tiempoOscuras - relojTurno.Elapsed : tiempoOscuras; // Resta el tiempo del turno actual si son oscuras.
+
                     // Guarda tras cada movimiento válido.
-                    bool seGuardoCorrectamente = guardarPartida(nombreArchivo, tablero, turnoActual, debeSeguirComiendo, filaOrigen, columnaOrigen);
+                    bool seGuardoCorrectamente = guardarPartida(nombreArchivo, tablero, turnoActual, debeSeguirComiendo, filaOrigen, columnaOrigen, tiempoClarasParaGuardar, tiempoOscurasParaGuardar);
 
                     if (!seGuardoCorrectamente)
                     {
@@ -1017,13 +1022,13 @@ string limpiarNombreArchivo(string nombreEscrito)
 }
 
 //bloque de cargar partida
-bool CargarPartida(string rutaPartida, int[,] tablero, ref int turnoActual, ref bool debeSeguirComiendo, ref int filaOrigen, ref int columnaOrigen)
+bool CargarPartida(string rutaPartida, int[,] tablero, ref int turnoActual, ref bool debeSeguirComiendo, ref int filaOrigen, ref int columnaOrigen, ref TimeSpan tiempoClaras, ref TimeSpan tiempoOscuras)
 {
     try //intenta leer y convertir los datos
     {
         string[] lineas = File.ReadAllLines(rutaPartida); //lee todas las lineas del archivo y las guarda en un arreglo
 
-        if (lineas.Length != 11)// verifica que existan 3 lineas de datos generales y 8 filas de tablero
+        if (lineas.Length != 11 && lineas.Length != 13)// verifica que existan 3 lineas de datos generales y 8 filas de tablero
         {
             return false;// detenemos la carga si el formato del archivo no coincide
         }
@@ -1087,6 +1092,33 @@ bool CargarPartida(string rutaPartida, int[,] tablero, ref int turnoActual, ref 
 
         }
 
+
+        if (lineas.Length == 13) // Los archivos nuevos incluyen los dos relojes.
+        {
+            bool tiempoClarasEsValido = long.TryParse(
+                lineas[11],
+                out long ticksClaras);
+
+            bool tiempoOscurasEsValido = long.TryParse(
+                lineas[12],
+                out long ticksOscuras);
+
+            if (!tiempoClarasEsValido || !tiempoOscurasEsValido)
+            {
+                return false; // El archivo tiene relojes inválidos.
+            }
+
+            tiempoClaras = TimeSpan.FromTicks(ticksClaras); // Recupera tiempo restante de claras.
+            tiempoOscuras = TimeSpan.FromTicks(ticksOscuras); // Recupera tiempo restante de oscuras.
+        }
+        else // Mantiene compatibilidad con tus guardados viejos de 11 líneas.
+        {
+            tiempoClaras = TimeSpan.FromMinutes(2);
+            tiempoOscuras = TimeSpan.FromMinutes(2);
+        }
+
+
+
         turnoActual = turnoLeido; //recuperamos el turno que estaba guardado
         debeSeguirComiendo = cadenaLeida; //recupera si habia una captera en cadena
         filaOrigen = filaLeida;//se recupera la fila de la ficha que estaba jugando
@@ -1108,7 +1140,7 @@ bool CargarPartida(string rutaPartida, int[,] tablero, ref int turnoActual, ref 
     }
 }
 
-bool guardarPartida(string nombreArchivo, int[,] tablero, int turnoActual, bool debeSeguirComiendo, int filaOrigen, int columnaOrigen)
+bool guardarPartida(string nombreArchivo, int[,] tablero, int turnoActual, bool debeSeguirComiendo, int filaOrigen, int columnaOrigen, TimeSpan tiempoClaras, TimeSpan tiempoOscuras)
 {
     try //intenta crear la carpeta y escribir el archivo
     {
@@ -1117,7 +1149,7 @@ bool guardarPartida(string nombreArchivo, int[,] tablero, int turnoActual, bool 
 
         string rutaPartida = Path.Combine(carpetaPartidas, nombreArchivo);// unimos la carpeta con el nombre del archivo
 
-        string[] lineas = new string[11];// creamos un arreglo para las 3 lineas generales y las 8 filas del tablero
+        string[] lineas = new string[13];// creamos un arreglo para las 3 lineas generales y las 8 filas del tablero
         lineas[0] = turnoActual.ToString();//guardamos el turno actual en la primera linea
         lineas[1] = debeSeguirComiendo.ToString();//guarda si es verdadero o falso el que siga comiendo en la segunda linea
         lineas[2] = $"{filaOrigen},{columnaOrigen}";// guardamos fila y columna separadas por una coma
@@ -1133,6 +1165,10 @@ bool guardarPartida(string nombreArchivo, int[,] tablero, int turnoActual, bool 
 
             lineas[fila + 3] = string.Join(",", valoresFila); //unimos los ocho valores con comas y los guarda desde la línea 4.
         }
+
+        lineas[11] = tiempoClaras.Ticks.ToString(); // Guarda el reloj de claras.
+
+        lineas[12] = tiempoOscuras.Ticks.ToString(); // Guarda el reloj de oscuras.
 
         File.WriteAllLines(rutaPartida, lineas); //escribimos todas las lineas en el archivo de la partida
 
