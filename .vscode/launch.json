@@ -6,19 +6,23 @@
     "configurations": [
         {
             "type": "java",
-            "name": "Launch Current File",
+            "name": "TwoDArray",
             "request": "launch",
-            "mainClass": "${file}"
+            "mainClass": "TwoDArray",
+            "projectName": "Tarea-Hola-Mundo-v2_ebe8d376"
         },
-
-        
         {
             "type": "java",
             "name": "Launch Current File",
             "request": "launch",
             "mainClass": "${file}"
         },
-
+        {
+            "type": "java",
+            "name": "Launch Current File",
+            "request": "launch",
+            "mainClass": "${file}"
+        },
         {
             "name": "g++.exe - Build and debug active file",
             "type": "cppdbg",
