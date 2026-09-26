@@ -1,3 +1,4 @@
+package java;
 public class QuickSort 
 {
     // Función para hacer la partición del arreglo

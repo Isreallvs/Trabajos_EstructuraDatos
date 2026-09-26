@@ -1,3 +1,4 @@
+package java;
 public class SelectionSort {
     static void selection (int[] a)
     {

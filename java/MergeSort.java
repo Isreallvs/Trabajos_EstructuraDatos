@@ -1,3 +1,4 @@
+package java;
 public class MergeSort 
 {
     // merge dos subarrays de a[]
