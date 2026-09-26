@@ -1,3 +1,4 @@
+package java;
 public class InsertionSort 
 {
     static void insertionSort(int[] a) 
